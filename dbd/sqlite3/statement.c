@@ -1,5 +1,8 @@
 #include "dbd_sqlite3.h"
 
+/*
+ * Converts SQLite types to Lua types
+ */
 static lua_push_type_t sqlite_to_lua_push(unsigned int sqlite_type) {
     lua_push_type_t lua_type;
 
@@ -23,6 +26,9 @@ static lua_push_type_t sqlite_to_lua_push(unsigned int sqlite_type) {
     return lua_type;
 }
 
+/*
+ * runs sqlite3_step on a statement handle
+ */
 static int step(statement_t *statement) {
     int res = sqlite3_step(statement->stmt);
 
@@ -37,6 +43,9 @@ static int step(statement_t *statement) {
     return 0;
 }
 
+/*
+ * success = statement:close()
+ */
 static int statement_close(lua_State *L) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_SQLITE_STATEMENT);
     int ok = 0;
@@ -52,11 +61,19 @@ static int statement_close(lua_State *L) {
     return 1;
 }
 
+/*
+ * success = statement:execute(...)
+ */
 static int statement_execute(lua_State *L) {
     int n = lua_gettop(L);
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_SQLITE_STATEMENT);
     int p;
 
+    /*
+     * reset the handle before binding params
+     * this wil be a NOP if the handle has not
+     * been executed
+     */
     if (sqlite3_reset(statement->stmt) != SQLITE_OK) {
 	lua_pushboolean(L, 0);
 	return 1;
@@ -84,11 +101,18 @@ static int statement_execute(lua_State *L) {
     return 1;
 }
 
+/*
+ * must be called after an execute
+ */
 static int statement_fetch_impl(lua_State *L, int named_columns) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_SQLITE_STATEMENT);
     int num_columns;
 
     if (!statement->more_data) {
+	/* 
+         * Result set is empty, or not result set returned
+         */
+  
 	lua_pushnil(L);
 	return 1;
     }
@@ -147,10 +171,18 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
                 luaL_error(L, "Unknown push type in result set");
             }
 	}
+    } else {
+	/* 
+         * no columns returned by statement?
+         */ 
+	lua_pushnil(L);
     }
 
     if (step(statement) == 0) {
 	if (sqlite3_reset(statement->stmt) != SQLITE_OK) {
+	    /* 
+	     * reset needs to be called to retrieve the 'real' error message
+	     */
 	    luaL_error(L, "Failed to fetch statement: %s", sqlite3_errmsg(statement->sqlite));
 	}
     }
@@ -158,34 +190,29 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
     return 1;    
 }
 
-
+/*
+ * array = statement:fetch() 
+ */
 static int statement_fetch(lua_State *L) {
     return statement_fetch_impl(L, 0);
 }
 
+/*
+ * hashmap = statement:fetchtable() 
+ */
 static int statement_fetchtable(lua_State *L) {
     return statement_fetch_impl(L, 1);
 }
 
+/*
+ * __gc
+ */
 static int statement_gc(lua_State *L) {
     /* always free the handle */
     statement_close(L);
 
     return 0;
 }
-
-
-static const luaL_Reg statement_methods[] = {
-    {"close", statement_close},
-    {"execute", statement_execute},
-    {"fetch", statement_fetch},
-    {"fetchtable", statement_fetchtable},
-    {NULL, NULL}
-};
-
-static const luaL_Reg statement_class_methods[] = {
-    {NULL, NULL}
-};
 
 int dbd_sqlite3_statement_create(lua_State *L, connection_t *conn, const char *sql_query) { 
     statement_t *statement = NULL;
@@ -208,6 +235,18 @@ int dbd_sqlite3_statement_create(lua_State *L, connection_t *conn, const char *s
 } 
 
 int dbd_sqlite3_statement(lua_State *L) {
+    static const luaL_Reg statement_methods[] = {
+	{"close", statement_close},
+	{"execute", statement_execute},
+	{"fetch", statement_fetch},
+	{"fetchtable", statement_fetchtable},
+	{NULL, NULL}
+    };
+
+    static const luaL_Reg statement_class_methods[] = {
+	{NULL, NULL}
+    };
+
     luaL_newmetatable(L, DBD_SQLITE_STATEMENT);
     luaL_register(L, 0, statement_methods);
     lua_pushvalue(L,-1);

@@ -2,6 +2,9 @@
 
 int dbd_mysql_statement_create(lua_State *L, connection_t *conn, const char *sql_query);
 
+/*
+ * connection = DBD.MySQl.New(dbname, user, password, host, port)
+ */
 static int connection_new(lua_State *L) {
     int n = lua_gettop(L);
 
@@ -50,6 +53,9 @@ static int connection_new(lua_State *L) {
     return 1;
 }
 
+/*
+ * success = connection:close()
+ */
 static int connection_close(lua_State *L) {
     connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_MYSQL_CONNECTION);
     int disconnect = 0;   
@@ -63,6 +69,9 @@ static int connection_close(lua_State *L) {
     return 1;
 }
 
+/* 
+ * ok = connection:ping()
+ */
 static int connection_ping(lua_State *L) {
     connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_MYSQL_CONNECTION);
     int err = 1;   
@@ -75,6 +84,9 @@ static int connection_ping(lua_State *L) {
     return 1;
 }
 
+/*
+ * statement = connection:prepare(sql_string)
+ */
 static int connection_prepare(lua_State *L) {
     connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_MYSQL_CONNECTION);
 
@@ -86,7 +98,9 @@ static int connection_prepare(lua_State *L) {
     return 1;
 }
 
-
+/*
+ * __gc
+ */
 static int connection_gc(lua_State *L) {
     /* always close the connection */
     connection_close(L);
@@ -94,19 +108,19 @@ static int connection_gc(lua_State *L) {
     return 0;
 }
 
-static const luaL_Reg connection_methods[] = {
-    {"close", connection_close},
-    {"ping", connection_ping},
-    {"prepare", connection_prepare},
-    {NULL, NULL}
-};
-
-static const luaL_Reg connection_class_methods[] = {
-    {"New", connection_new},
-    {NULL, NULL}
-};
-
 int dbd_mysql_connection(lua_State *L) {
+    static const luaL_Reg connection_methods[] = {
+	{"close", connection_close},
+	{"ping", connection_ping},
+	{"prepare", connection_prepare},
+	{NULL, NULL}
+    };
+
+    static const luaL_Reg connection_class_methods[] = {
+	{"New", connection_new},
+	{NULL, NULL}
+    };
+
     luaL_newmetatable(L, DBD_MYSQL_CONNECTION);
     luaL_register(L, 0, connection_methods);
     lua_pushvalue(L,-1);

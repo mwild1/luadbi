@@ -10,7 +10,14 @@
 #include <compat-5.1.h>
 #endif
 
-
+/*
+ *
+ * Table construction helper functions
+ *
+ * LUA_PUSH_ATTRIB_* creates string indexed (hashmap)
+ * LUA_PUSH_ATTRIB_* creates integer indexed (array)
+ *
+ */
 
 #define LUA_PUSH_ATTRIB_INT(n, v) \
     lua_pushstring(L, n); \
@@ -64,7 +71,11 @@
     lua_rawseti(L, -2, n); \
     n++;
 
-
+/*
+ *
+ * Describes SQL to Lua API conversions
+ *
+ */
 
 typedef enum lua_push_type {
     LUA_PUSH_NIL = 0,

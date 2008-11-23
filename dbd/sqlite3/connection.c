@@ -2,6 +2,9 @@
 
 int dbd_sqlite3_statement_create(lua_State *L, connection_t *conn, const char *sql_query);
 
+/* 
+ * connection = DBD.SQLite3.New(dbfile)
+ */
 static int connection_new(lua_State *L) {
     int n = lua_gettop(L);
 
@@ -28,18 +31,14 @@ static int connection_new(lua_State *L) {
     return 1;
 }
 
+/*
+ * success = connection:close()
+ */
 static int connection_close(lua_State *L) {
     connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_SQLITE_CONNECTION);
     int disconnect = 0;   
 
     if (conn->sqlite) {
-#if 0
-	sqlite3_stmt *stmt;
-
-	while((stmt = sqlite3_next_stmt(conn->sqlite, NULL)) != 0){
-	    sqlite3_finalize(stmt);
-	}
-#endif
 	if (sqlite3_close(conn->sqlite) == SQLITE_OK) {
 	    disconnect = 1;
 	}
@@ -49,6 +48,9 @@ static int connection_close(lua_State *L) {
     return 1;
 }
 
+/*
+ * ok = connection:ping()
+ */
 static int connection_ping(lua_State *L) {
     connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_SQLITE_CONNECTION);
     int ok = 0;   
@@ -61,6 +63,9 @@ static int connection_ping(lua_State *L) {
     return 1;
 }
 
+/*
+ * statement = connection:prepare(sql_str)
+ */
 static int connection_prepare(lua_State *L) {
     connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_SQLITE_CONNECTION);
 
@@ -72,7 +77,9 @@ static int connection_prepare(lua_State *L) {
     return 1;
 }
 
-
+/*
+ * __gc 
+ */
 static int connection_gc(lua_State *L) {
     /* always close the connection */
     connection_close(L);
@@ -80,19 +87,25 @@ static int connection_gc(lua_State *L) {
     return 0;
 }
 
-static const luaL_Reg connection_methods[] = {
-    {"close", connection_close},
-    {"ping", connection_ping},
-    {"prepare", connection_prepare},
-    {NULL, NULL}
-};
-
-static const luaL_Reg connection_class_methods[] = {
-    {"New", connection_new},
-    {NULL, NULL}
-};
-
 int dbd_sqlite3_connection(lua_State *L) {
+    /*
+     * instance methods
+     */
+    static const luaL_Reg connection_methods[] = {
+	{"close", connection_close},
+	{"ping", connection_ping},
+	{"prepare", connection_prepare},
+	{NULL, NULL}
+    };
+
+    /*
+     * class methods
+     */
+    static const luaL_Reg connection_class_methods[] = {
+	{"New", connection_new},
+	{NULL, NULL}
+    };
+
     luaL_newmetatable(L, DBD_SQLITE_CONNECTION);
     luaL_register(L, 0, connection_methods);
     lua_pushvalue(L,-1);

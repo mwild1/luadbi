@@ -2,6 +2,7 @@
 
 module('DBI', package.seeall)
 
+-- Driver to module mapping
 local name_to_module = {
     MySQL = 'dbdmysql',
     PostgreSQL = 'dbdpostgresql',
@@ -10,6 +11,8 @@ local name_to_module = {
 
 local string = require('string')
 
+-- Returns a list of available drivers
+-- based on run time loading
 local function available_drivers()
     local available = {}
 
@@ -21,6 +24,7 @@ local function available_drivers()
 	end
     end
 
+    -- no drivers available
     if table.maxn(available) < 1 then
 	return '(None)'
     end
@@ -28,6 +32,8 @@ local function available_drivers()
     return table.concat(available, ',')
 end
 
+ -- High level DB connection function
+ -- This should be used rather than DBD.{Driver}.New
 function Connect(driver, name, username, password, host, port)
     local modulefile = name_to_module[driver]
 
@@ -38,6 +44,7 @@ function Connect(driver, name, username, password, host, port)
     local m, err = pcall(require, modulefile)
 
     if not m then
+	-- cannot load the module, we cannot continue
 	error(string.format('Cannot load driver %s. Available drivers are: %s', driver, available_drivers()))
     end
 
@@ -45,6 +52,7 @@ function Connect(driver, name, username, password, host, port)
 
     local connection_class = package.loaded[class_str]
 
+    -- Calls DBD.{Driver}.New(...)
     return connection_class.New(name, username, password, host, port)
 end
 

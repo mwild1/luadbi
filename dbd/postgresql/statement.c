@@ -1,6 +1,6 @@
 #include "dbd_postgresql.h"
 
-#define MAX_PLACEHOLDERS	9999
+#define MAX_PLACEHOLDERS	9999 
 #define MAX_PLACEHOLDER_SIZE	(1+4) /* $\d{4} */
 
 static lua_push_type_t postgresql_to_lua_push(unsigned int postgresql_type) {
@@ -28,6 +28,10 @@ static lua_push_type_t postgresql_to_lua_push(unsigned int postgresql_type) {
     return lua_type;
 }
 
+/*
+ * replace '?' placeholders with $\d+ placeholders
+ * to be compatible with PSQL API
+ */
 static char *replace_placeholders(lua_State *L, const char *sql) {
     size_t len = strlen(sql);
     int num_placeholders = 0;
@@ -38,20 +42,43 @@ static char *replace_placeholders(lua_State *L, const char *sql) {
     int ph_num = 1;
     int in_quote = 0;
 
+    /*
+     * dumb count of all '?'
+     * this will match more placeholders than necessesary
+     * but it's safer to allocate more placeholders at the
+     * cost of a few bytes than risk a buffer overflow
+     */ 
     for (i = 1; i < len; i++) {
 	if (sql[i] == '?') {
 	    num_placeholders++;
 	}
     }
     
+    /*
+     * this is MAX_PLACEHOLDER_SIZE-1 because the '?' is 
+     * replaced with '$'
+     */ 
     extra_space = num_placeholders * (MAX_PLACEHOLDER_SIZE-1); 
 
+    /*
+     * allocate a new string for the converted SQL statement
+     */
     newsql = malloc(sizeof(char) * (len+extra_space+1));
     memset(newsql, 0, sizeof(char) * (len+extra_space+1));
     
-    /* copy first char */
+    /* 
+     * copy first char. In valid SQL this cannot be a placeholder
+     */
     newsql[0] = sql[0];
+
+    /* 
+     * only replace '?' not in a single quoted string
+     */
     for (i = 1; i < len; i++) {
+	/*
+	 * don't change the quote flag if the ''' is preceded 
+	 * bt a '\' to account for escaping
+	 */
 	if (sql[i] == '\'' && sql[i-1] != '\\') {
 	    in_quote = !in_quote;
 	}
@@ -72,13 +99,18 @@ static char *replace_placeholders(lua_State *L, const char *sql) {
 	}
     }
 
-    /* terminate string on the last position */
+    /* 
+     * terminate string on the last position 
+     */
     newsql[newpos] = '\0';
 
     /* fprintf(stderr, "[%s]\n", newsql); */
     return newsql;
 }
 
+/*
+ * success = statement:close()
+ */
 static int statement_close(lua_State *L) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_STATEMENT);
 
@@ -90,6 +122,9 @@ static int statement_close(lua_State *L) {
     return 0;    
 }
 
+/*
+ * success = statement:execute(...)
+ */
 static int statement_execute(lua_State *L) {
     int n = lua_gettop(L);
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_STATEMENT);
@@ -104,6 +139,9 @@ static int statement_execute(lua_State *L) {
 
     params = malloc(num_bind_params * sizeof(params));
 
+    /*
+     * convert and copy parameters into a string array
+     */ 
     for (p = 2; p <= n; p++) {
 	int i = p - 2;	
 
@@ -131,6 +169,9 @@ static int statement_execute(lua_State *L) {
         0
     );
 
+    /*
+     * free string array
+     */
     for (p = 0; p < num_bind_params; p++) {
 	if (params[p]) {
 	    free(params[p]);
@@ -157,6 +198,9 @@ static int statement_execute(lua_State *L) {
     return 1;
 }
 
+/*
+ * must be called after an execute
+ */
 static int statement_fetch_impl(lua_State *L, int named_columns) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_STATEMENT);
     int tuple = statement->tuple++;
@@ -189,6 +233,10 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
 	    const char *value = PQgetvalue(statement->result, tuple, i);
 	    lua_push_type_t lua_push = postgresql_to_lua_push(PQftype(statement->result, i));
 
+	    /*
+             * data is returned as strings from PSQL
+             */ 
+
             if (lua_push == LUA_PUSH_NIL) {
                 if (named_columns) {
                     LUA_PUSH_ATTRIB_NIL(name);
@@ -218,6 +266,10 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
                     LUA_PUSH_ARRAY_STRING(d, value);
                 }
             } else if (lua_push == LUA_PUSH_BOOLEAN) {
+		/* 
+                 * booleans are returned as a string
+                 * either 't' or 'f'
+                 */
                 int val = value[0] == 't' ? 1 : 0;
 
                 if (named_columns) {
@@ -234,34 +286,29 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
     return 1;    
 }
 
-
+/*
+ * array = statement:fetch()
+ */
 static int statement_fetch(lua_State *L) {
     return statement_fetch_impl(L, 0);
 }
 
+/*
+ * hashmap = statement:fetchtable()
+ */
 static int statement_fetchtable(lua_State *L) {
     return statement_fetch_impl(L, 1);
 }
 
+/*
+ * __gc
+ */
 static int statement_gc(lua_State *L) {
     /* always free the handle */
     statement_close(L);
 
     return 0;
 }
-
-
-static const luaL_Reg statement_methods[] = {
-    {"close", statement_close},
-    {"execute", statement_execute},
-    {"fetch", statement_fetch},
-    {"fetchtable", statement_fetchtable},
-    {NULL, NULL}
-};
-
-static const luaL_Reg statement_class_methods[] = {
-    {NULL, NULL}
-};
 
 int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char *sql_query) { 
     statement_t *statement = NULL;
@@ -270,11 +317,18 @@ int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char
     char *new_sql;
     char name[IDLEN];
 
+    /*
+     * convert SQL string into a PSQL API compatible SQL statement
+     */ 
     new_sql = replace_placeholders(L, sql_query);
 
     snprintf(name, IDLEN, "%017u", ++conn->statement_id);
 
     result = PQprepare(conn->postgresql, name, new_sql, 0, NULL);
+
+    /*
+     * free converted statement after use
+     */
     free(new_sql);
 
     if (!result) {
@@ -305,6 +359,18 @@ int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char
 } 
 
 int dbd_postgresql_statement(lua_State *L) {
+    static const luaL_Reg statement_methods[] = {
+	{"close", statement_close},
+	{"execute", statement_execute},
+	{"fetch", statement_fetch},
+	{"fetchtable", statement_fetchtable},
+	{NULL, NULL}
+    };
+
+    static const luaL_Reg statement_class_methods[] = {
+	{NULL, NULL}
+    };
+
     luaL_newmetatable(L, DBD_POSTGRESQL_STATEMENT);
     luaL_register(L, 0, statement_methods);
     lua_pushvalue(L,-1);

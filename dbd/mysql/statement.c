@@ -26,6 +26,9 @@ static lua_push_type_t mysql_to_lua_push(unsigned int mysql_type) {
     return lua_type;
 } 
 
+/*
+ * success = statement:close()
+ */
 static int statement_close(lua_State *L) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_MYSQL_STATEMENT);
 
@@ -40,6 +43,9 @@ static int statement_close(lua_State *L) {
     return 1;    
 }
 
+/*
+ * success = statement:execute(...)
+ */
 static int statement_execute(lua_State *L) {
     int n = lua_gettop(L);
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_MYSQL_STATEMENT); 
@@ -230,34 +236,29 @@ cleanup:
     return 1;    
 }
 
-
+/*
+ * array = statement:fetch()
+ */
 static int statement_fetch(lua_State *L) {
     return statement_fetch_impl(L, 0);
 }
 
+/*
+ * hashmap = statement:fetchtable()
+ */
 static int statement_fetchtable(lua_State *L) {
     return statement_fetch_impl(L, 1);
 }
 
+/*
+ * __gc
+ */
 static int statement_gc(lua_State *L) {
     /* always free the handle */
     statement_close(L);
 
     return 0;
 }
-
-
-static const luaL_Reg statement_methods[] = {
-    {"close", statement_close},
-    {"execute", statement_execute},
-    {"fetch", statement_fetch},
-    {"fetchtable", statement_fetchtable},
-    {NULL, NULL}
-};
-
-static const luaL_Reg statement_class_methods[] = {
-    {NULL, NULL}
-};
 
 int dbd_mysql_statement_create(lua_State *L, connection_t *conn, const char *sql_query) { 
     unsigned long sql_len = strlen(sql_query);
@@ -288,6 +289,18 @@ int dbd_mysql_statement_create(lua_State *L, connection_t *conn, const char *sql
 } 
 
 int dbd_mysql_statement(lua_State *L) {
+    static const luaL_Reg statement_methods[] = {
+	{"close", statement_close},
+	{"execute", statement_execute},
+	{"fetch", statement_fetch},
+	{"fetchtable", statement_fetchtable},
+	{NULL, NULL}
+    };
+
+    static const luaL_Reg statement_class_methods[] = {
+	{NULL, NULL}
+    };
+
     luaL_newmetatable(L, DBD_MYSQL_STATEMENT);
     luaL_register(L, 0, statement_methods);
     lua_pushvalue(L,-1);
