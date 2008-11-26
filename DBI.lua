@@ -56,6 +56,8 @@ function Connect(driver, name, username, password, host, port)
     return connection_class.New(name, username, password, host, port)
 end
 
+-- Help function to do prepare and execute in 
+-- a single step
 function Do(dbh, sql, ...)
     local sth,err = dbh:prepare(sql)
 

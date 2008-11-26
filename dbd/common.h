@@ -73,7 +73,7 @@
 
 /*
  *
- * Describes SQL to Lua API conversions
+ * Describes SQL to Lua API type conversions
  *
  */
 
@@ -87,3 +87,27 @@ typedef enum lua_push_type {
     LUA_PUSH_MAX
 } lua_push_type_t;
 
+/*
+ *
+ * Common error strings
+ * defined here for consistency in driver implementations
+ *
+ */
+
+#define	DBI_ERR_CONNECTION_FAILED   "Failed to connect to database: %s"
+#define DBI_ERR_DB_UNAVAILABLE	    "Database not available"
+#define DBI_ERR_EXECUTE_INVALID	    "Execute called on a closed or invalid statement"
+#define DBI_ERR_EXECUTE_FAILED	    "Execute failed %s"
+#define DBI_ERR_FETCH_INVALID	    "Fetch called on a closed or invalid statement"
+#define DBI_ERR_FETCH_FAILED	    "Fetch failed %s"
+#define DBI_ERR_PARAM_MISCOUNT	    "Statement expected %d parameters but received %d"
+#define	DBI_ERR_BINDING_UNKNOWN	    "Binding unknown or unsupported type"
+#define DBI_ERR_BINDING_PARAMS	    "Error binding statement parameters: %s"
+#define DBI_ERR_BINDING_EXEC	    "Error executing statement parameters: %s"
+#define DBI_ERR_FETCH_NO_EXECUTE    "Fetch called before execute"
+#define DBI_ERR_BINDING_RESULTS	    "Error binding statement results: %s"
+#define DBI_ERR_UNKNOWN_PUSH	    "Unknown push type in result set"
+#define DBI_ERR_ALLOC_STATEMENT	    "Error allocating statement handle: %s"
+#define DBI_ERR_PREP_STATEMENT	    "Error preparing statement handle: %s"
+#define DBI_ERR_INVALID_PORT	    "Invalid port: %d"
+#define DBI_ERR_ALLOC_RESULT	    "Error allocating result set: %s"

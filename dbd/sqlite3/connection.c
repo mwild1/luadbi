@@ -22,7 +22,7 @@ static int connection_new(lua_State *L) {
 
     if (sqlite3_open(db, &conn->sqlite) != SQLITE_OK) {
 	lua_pushnil(L);
-	lua_pushfstring(L, "Failed to connect to database: %s", sqlite3_errmsg(conn->sqlite));
+	lua_pushfstring(L, DBI_ERR_CONNECTION_FAILED, sqlite3_errmsg(conn->sqlite));
 	return 2;
     }
 
@@ -76,7 +76,7 @@ static int connection_prepare(lua_State *L) {
     }
 
     lua_pushnil(L);    
-    lua_pushstring(L, "Connection not available");
+    lua_pushstring(L, DBI_ERR_DB_UNAVAILABLE);
     return 2;
 }
 

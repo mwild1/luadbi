@@ -74,7 +74,7 @@ int statement_execute(lua_State *L) {
 
     if (!statement->stmt) {
 	lua_pushboolean(L, 0);
-	lua_pushstring(L, "execute called on a closed or invalid handle");
+	lua_pushstring(L, DBI_ERR_EXECUTE_INVALID);
 	return 2;
     }
 
@@ -85,7 +85,7 @@ int statement_execute(lua_State *L) {
      */
     if (sqlite3_reset(statement->stmt) != SQLITE_OK) {
 	lua_pushboolean(L, 0);
-	lua_pushfstring(L, "Failed to execute statement: %s", sqlite3_errmsg(statement->sqlite));
+	lua_pushfstring(L, DBI_ERR_EXECUTE_FAILED, sqlite3_errmsg(statement->sqlite));
 	return 2;
     }
 
@@ -110,10 +110,15 @@ int statement_execute(lua_State *L) {
 	    break;
     }   
 
-    if (err || step(statement) == 0) {
+    if (err) {
 	lua_pushboolean(L, 0);
-	lua_pushfstring(L, "Failed to execute statement: %s", sqlite3_errmsg(statement->sqlite));
+	lua_pushfstring(L, DBI_ERR_BINDING_PARAMS, sqlite3_errmsg(statement->sqlite));
 	return 2;
+    }
+
+    if (!step(statement)) {
+	lua_pushboolean(L, 0);
+	lua_pushfstring(L, DBI_ERR_EXECUTE_FAILED, sqlite3_errmsg(statement->sqlite));
     }
 
     lua_pushboolean(L, 1);
@@ -128,7 +133,7 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
     int num_columns;
 
     if (!statement->stmt) {
-	luaL_error(L, "fetch called on a closed or invalid handle");
+	luaL_error(L, DBI_ERR_FETCH_INVALID);
 	return 0;
     }
 
@@ -192,7 +197,7 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
                     LUA_PUSH_ARRAY_BOOL(d, val);
                 }
             } else {
-                luaL_error(L, "Unknown push type in result set");
+                luaL_error(L, DBI_ERR_UNKNOWN_PUSH);
             }
 	}
     } else {
@@ -207,7 +212,7 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
 	    /* 
 	     * reset needs to be called to retrieve the 'real' error message
 	     */
-	    luaL_error(L, "Failed to fetch statement: %s", sqlite3_errmsg(statement->sqlite));
+	    luaL_error(L, DBI_ERR_FETCH_FAILED, sqlite3_errmsg(statement->sqlite));
 	}
     }
 
@@ -248,7 +253,7 @@ int dbd_sqlite3_statement_create(lua_State *L, connection_t *conn, const char *s
 
     if (sqlite3_prepare_v2(statement->sqlite, sql_query, strlen(sql_query), &statement->stmt, NULL) != SQLITE_OK) {
 	lua_pushnil(L);
-	lua_pushfstring(L, "Failed to prepare statement: %s", sqlite3_errmsg(statement->sqlite));	
+	lua_pushfstring(L, DBI_ERR_PREP_STATEMENT, sqlite3_errmsg(statement->sqlite));	
 	return 2;
     } 
 

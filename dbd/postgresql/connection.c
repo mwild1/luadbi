@@ -31,7 +31,7 @@ static int connection_new(lua_State *L) {
 		snprintf(portbuf, sizeof(portbuf), "%d", pport);
 		port = portbuf;
 	    } else {
-		luaL_error(L, "Invalid port %d", pport);
+		luaL_error(L, DBI_ERR_INVALID_PORT, pport);
 	    }
 	}
     case 4: 
@@ -55,7 +55,7 @@ static int connection_new(lua_State *L) {
 
     if (PQstatus(conn->postgresql) != CONNECTION_OK) {
 	lua_pushnil(L);
-	lua_pushfstring(L, "Failed to connect to database: %s", PQerrorMessage(conn->postgresql));
+	lua_pushfstring(L, DBI_ERR_CONNECTION_FAILED, PQerrorMessage(conn->postgresql));
 	return 2;
     }
 
@@ -111,7 +111,7 @@ static int connection_prepare(lua_State *L) {
     }
 
     lua_pushnil(L);    
-    lua_pushstring(L, "Database not available");
+    lua_pushstring(L, DBI_ERR_DB_UNAVAILABLE);
     return 2;
 }
 

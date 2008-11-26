@@ -181,14 +181,14 @@ static int statement_execute(lua_State *L) {
 
     if (!result) {
 	lua_pushboolean(L, 0);
-	lua_pushstring(L, "Unable to allocate result handle");
+	lua_pushfstring(L, DBI_ERR_ALLOC_RESULT,  PQerrorMessage(statement->postgresql));
 	return 2;
     }
     
     status = PQresultStatus(result);
     if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK) {
 	lua_pushboolean(L, 0);
-	lua_pushfstring(L, "Unable to execute statment: %s", PQresultErrorMessage(result));
+	lua_pushfstring(L, DBI_ERR_BINDING_EXEC, PQresultErrorMessage(result));
 	return 2;
     }
     
@@ -209,7 +209,7 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
     int num_columns;
 
     if (!statement->result) {
-	luaL_error(L, "fetch called on a closed or invalid statement");
+	luaL_error(L, DBI_ERR_FETCH_INVALID);
 	return 0;
     }
 
@@ -284,7 +284,7 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
                     LUA_PUSH_ARRAY_BOOL(d, val);
                 }
             } else {
-                luaL_error(L, "Unknown push type in result set");
+                luaL_error(L, DBI_ERR_UNKNOWN_PUSH);
             }
 	}
     }
@@ -339,7 +339,7 @@ int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char
 
     if (!result) {
 	lua_pushnil(L);
-	lua_pushstring(L, "Unable to allocate prepare result handle");
+	lua_pushfstring(L, DBI_ERR_ALLOC_STATEMENT, PQerrorMessage(statement->postgresql));
 	return 2;
     }
     
@@ -349,7 +349,7 @@ int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char
 	PQclear(result);
 
 	lua_pushnil(L);
-	lua_pushfstring(L, "Unable to prepare statment: %s", err_string);
+	lua_pushfstring(L, DBI_ERR_PREP_STATEMENT, err_string);
 	return 2;
     }
 

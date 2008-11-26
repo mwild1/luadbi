@@ -44,7 +44,7 @@ static int connection_new(lua_State *L) {
 
     if (!mysql_real_connect(conn->mysql, host, user, password, db, port, unix_socket, client_flag)) {
 	lua_pushnil(L);
-	lua_pushfstring(L, "Failed to connect to database: %s", mysql_error(conn->mysql));
+	lua_pushfstring(L, DBI_ERR_CONNECTION_FAILED, mysql_error(conn->mysql));
 	return 2;
     }
 
@@ -97,7 +97,7 @@ static int connection_prepare(lua_State *L) {
     }
 
     lua_pushnil(L);    
-    lua_pushstring(L, "Database not available");    
+    lua_pushstring(L, DBI_ERR_DB_UNAVAILABLE);    
 
     return 2;
 }

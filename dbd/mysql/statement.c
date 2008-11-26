@@ -64,7 +64,7 @@ static int statement_execute(lua_State *L) {
 
     if (!statement->stmt) {
 	lua_pushboolean(L, 0);
-	lua_pushstring(L, "execute called on a closed or invalid statement");
+	lua_pushstring(L, DBI_ERR_EXECUTE_INVALID);
 	return 2;
     }
 
@@ -76,7 +76,7 @@ static int statement_execute(lua_State *L) {
          * and the client library will segfault if these do no match
          */ 
 	lua_pushboolean(L, 0);
-	lua_pushfstring(L, "Statement expected %d paramaters but received %d", expected_params, num_bind_params); 
+	lua_pushfstring(L, DBI_ERR_PARAM_MISCOUNT, expected_params, num_bind_params); 
 	return 2;
     }
 
@@ -117,18 +117,18 @@ static int statement_execute(lua_State *L) {
 		break;
 
 	    default:
-		error_message = "Binding unknown or unsupported type"; 
+		error_message = DBI_ERR_BINDING_UNKNOWN; 
 		goto cleanup;
 	}
     }
 
     if (mysql_stmt_bind_param(statement->stmt, bind)) {
-	error_message = "Error binding statement parameters: %s";
+	error_message = DBI_ERR_BINDING_PARAMS;
 	goto cleanup;
     }
 
     if (mysql_stmt_execute(statement->stmt)) {
-	error_message = "Error executing statement: %s";
+	error_message = DBI_ERR_BINDING_EXEC;
 	goto cleanup;
     }
 
@@ -157,12 +157,12 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
     const char *error_message = NULL;
 
     if (!statement->stmt) {
-	luaL_error(L, "fetch called on a closed or invalid statement");
+	luaL_error(L, DBI_ERR_FETCH_INVALID);
 	return 0;
     }
 
     if (!statement->metadata) {
-	luaL_error(L, "fetch called before execute");
+	luaL_error(L, DBI_ERR_FETCH_NO_EXECUTE);
 	return 0;
     }
 
@@ -194,7 +194,7 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
 	}
 
 	if (mysql_stmt_bind_result(statement->stmt, bind)) {
-	    error_message = "Error binding results: %s";
+	    error_message = DBI_ERR_BINDING_RESULTS;
 	    goto cleanup;
 	}
 
@@ -237,7 +237,7 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
 			LUA_PUSH_ARRAY_BOOL(d, *(int *)(bind[i].buffer));
 		    }
 		} else {
-		    luaL_error(L, "Unknown push type in result set");
+		    luaL_error(L, DBI_ERR_UNKNOWN_PUSH);
 		}
 	    }
 	} else {
@@ -297,13 +297,13 @@ int dbd_mysql_statement_create(lua_State *L, connection_t *conn, const char *sql
 
     if (!stmt) {
 	lua_pushnil(L);
-	lua_pushfstring(L, "Error allocating statement handle: %s", mysql_error(conn->mysql));
+	lua_pushfstring(L, DBI_ERR_ALLOC_STATEMENT, mysql_error(conn->mysql));
 	return 2;
     }
 
     if (mysql_stmt_prepare(stmt, sql_query, sql_len)) {
 	lua_pushnil(L);
-	lua_pushfstring(L, "Error preparing statement handle: %s", mysql_stmt_error(stmt));
+	lua_pushfstring(L, DBI_ERR_PREP_STATEMENT, mysql_stmt_error(stmt));
 	return 2;
     }
 
