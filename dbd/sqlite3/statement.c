@@ -119,6 +119,7 @@ int statement_execute(lua_State *L) {
     if (!step(statement)) {
 	lua_pushboolean(L, 0);
 	lua_pushfstring(L, DBI_ERR_EXECUTE_FAILED, sqlite3_errmsg(statement->sqlite));
+	return 2;
     }
 
     lua_pushboolean(L, 1);
