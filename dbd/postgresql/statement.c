@@ -180,21 +180,22 @@ static int statement_execute(lua_State *L) {
     free(params);
 
     if (!result) {
-	luaL_error(L, "Unable to allocate result handle");
 	lua_pushboolean(L, 0);
-	return 1;
+	lua_pushstring(L, "Unable to allocate result handle");
+	return 2;
     }
     
     status = PQresultStatus(result);
     if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK) {
-	luaL_error(L, "Unable to execute statment: %s", PQresultErrorMessage(result));
 	lua_pushboolean(L, 0);
-	return 1;
+	lua_pushfstring(L, "Unable to execute statment: %s", PQresultErrorMessage(result));
+	return 2;
     }
     
     statement->result = result;
 
     lua_pushboolean(L, 1);
+    lua_pushnil(L);
     return 1;
 }
 
@@ -206,6 +207,11 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
     int tuple = statement->tuple++;
     int i;
     int num_columns;
+
+    if (!statement->result) {
+	luaL_error(L, "fetch called on a closed or invalid statement");
+	return 0;
+    }
 
     if (PQresultStatus(statement->result) != PGRES_TUPLES_OK) {
 	lua_pushnil(L);
@@ -332,15 +338,19 @@ int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char
     free(new_sql);
 
     if (!result) {
-	luaL_error(L, "Unable to allocate prepare result handle");
+	lua_pushnil(L);
+	lua_pushstring(L, "Unable to allocate prepare result handle");
+	return 2;
     }
     
     status = PQresultStatus(result);
     if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK) {
 	const char *err_string = PQresultErrorMessage(result);
 	PQclear(result);
-	luaL_error(L, "Unable to prepare statment: %s", err_string);
-	return 0;
+
+	lua_pushnil(L);
+	lua_pushfstring(L, "Unable to prepare statment: %s", err_string);
+	return 2;
     }
 
     PQclear(result);

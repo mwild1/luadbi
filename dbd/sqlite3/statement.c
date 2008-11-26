@@ -46,7 +46,7 @@ static int step(statement_t *statement) {
 /*
  * success = statement:close()
  */
-static int statement_close(lua_State *L) {
+int statement_close(lua_State *L) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_SQLITE_STATEMENT);
     int ok = 0;
 
@@ -54,20 +54,29 @@ static int statement_close(lua_State *L) {
 	if (sqlite3_finalize(statement->stmt) == SQLITE_OK) {
 	    ok = 1;
 	}
+
+	statement->stmt = NULL;
     }
 
     lua_pushboolean(L, ok);
-
     return 1;
 }
 
 /*
- * success = statement:execute(...)
+ * success,err = statement:execute(...)
  */
-static int statement_execute(lua_State *L) {
+int statement_execute(lua_State *L) {
     int n = lua_gettop(L);
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_SQLITE_STATEMENT);
     int p;
+    int err = 0;
+
+
+    if (!statement->stmt) {
+	lua_pushboolean(L, 0);
+	lua_pushstring(L, "execute called on a closed or invalid handle");
+	return 2;
+    }
 
     /*
      * reset the handle before binding params
@@ -76,7 +85,8 @@ static int statement_execute(lua_State *L) {
      */
     if (sqlite3_reset(statement->stmt) != SQLITE_OK) {
 	lua_pushboolean(L, 0);
-	return 1;
+	lua_pushfstring(L, "Failed to execute statement: %s", sqlite3_errmsg(statement->sqlite));
+	return 2;
     }
 
     for (p = 2; p <= n; p++) {
@@ -84,20 +94,29 @@ static int statement_execute(lua_State *L) {
 
 	if (lua_isnil(L, p)) {
 	    if (sqlite3_bind_null(statement->stmt, i) != SQLITE_OK) {
-		luaL_error(L, "Failed to execute statement: %s", sqlite3_errmsg(statement->sqlite));
+		err = 1;
 	    }
 	} else if (lua_isnumber(L, p)) {
 	    if (sqlite3_bind_double(statement->stmt, i, luaL_checknumber(L, p)) != SQLITE_OK) {
-		luaL_error(L, "Failed to execute statement: %s", sqlite3_errmsg(statement->sqlite));
+		err = 1;
 	    }
 	} else if (lua_isstring(L, p)) {
 	    if (sqlite3_bind_text(statement->stmt, i, luaL_checkstring(L, p), -1, SQLITE_STATIC) != SQLITE_OK) {
-		luaL_error(L, "Failed to execute statement: %s", sqlite3_errmsg(statement->sqlite));
+		err = 1;
 	    }
 	}
+
+	if (err)
+	    break;
     }   
 
-    lua_pushboolean(L, step(statement));
+    if (err || step(statement) == 0) {
+	lua_pushboolean(L, 0);
+	lua_pushfstring(L, "Failed to execute statement: %s", sqlite3_errmsg(statement->sqlite));
+	return 2;
+    }
+
+    lua_pushboolean(L, 1);
     return 1;
 }
 
@@ -107,6 +126,11 @@ static int statement_execute(lua_State *L) {
 static int statement_fetch_impl(lua_State *L, int named_columns) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_SQLITE_STATEMENT);
     int num_columns;
+
+    if (!statement->stmt) {
+	luaL_error(L, "fetch called on a closed or invalid handle");
+	return 0;
+    }
 
     if (!statement->more_data) {
 	/* 
@@ -223,14 +247,13 @@ int dbd_sqlite3_statement_create(lua_State *L, connection_t *conn, const char *s
     statement->more_data = 0;
 
     if (sqlite3_prepare_v2(statement->sqlite, sql_query, strlen(sql_query), &statement->stmt, NULL) != SQLITE_OK) {
-	luaL_error(L, "Failed to prepare statement: %s", sqlite3_errmsg(statement->sqlite));	
 	lua_pushnil(L);
-	return 1;
+	lua_pushfstring(L, "Failed to prepare statement: %s", sqlite3_errmsg(statement->sqlite));	
+	return 2;
     } 
 
     luaL_getmetatable(L, DBD_SQLITE_STATEMENT);
     lua_setmetatable(L, -2);
-
     return 1;
 } 
 

@@ -56,3 +56,12 @@ function Connect(driver, name, username, password, host, port)
     return connection_class.New(name, username, password, host, port)
 end
 
+function Do(dbh, sql, ...)
+    local sth,err = dbh:prepare(sql)
+
+    if not sth then
+	return false, err
+    end
+
+    return sth:execute(...)
+end

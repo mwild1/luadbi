@@ -3,7 +3,7 @@
 int dbd_mysql_statement_create(lua_State *L, connection_t *conn, const char *sql_query);
 
 /*
- * connection = DBD.MySQl.New(dbname, user, password, host, port)
+ * connection,err = DBD.MySQl.New(dbname, user, password, host, port)
  */
 static int connection_new(lua_State *L) {
     int n = lua_gettop(L);
@@ -42,13 +42,14 @@ static int connection_new(lua_State *L) {
 
     conn->mysql = mysql_init(NULL);
 
-    if (mysql_real_connect(conn->mysql, host, user, password, db, port, unix_socket, client_flag)) {
-        luaL_getmetatable(L, DBD_MYSQL_CONNECTION);
-        lua_setmetatable(L, -2);
-    } else {
-	luaL_error(L, "Failed to connect to database: %s", mysql_error(conn->mysql));
+    if (!mysql_real_connect(conn->mysql, host, user, password, db, port, unix_socket, client_flag)) {
 	lua_pushnil(L);
+	lua_pushfstring(L, "Failed to connect to database: %s", mysql_error(conn->mysql));
+	return 2;
     }
+
+    luaL_getmetatable(L, DBD_MYSQL_CONNECTION);
+    lua_setmetatable(L, -2);
 
     return 1;
 }
@@ -63,6 +64,7 @@ static int connection_close(lua_State *L) {
     if (conn->mysql) {
 	mysql_close(conn->mysql);
 	disconnect = 1;
+	conn->mysql = NULL;
     }
 
     lua_pushboolean(L, disconnect);
@@ -85,7 +87,7 @@ static int connection_ping(lua_State *L) {
 }
 
 /*
- * statement = connection:prepare(sql_string)
+ * statement,err = connection:prepare(sql_string)
  */
 static int connection_prepare(lua_State *L) {
     connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_MYSQL_CONNECTION);
@@ -95,7 +97,9 @@ static int connection_prepare(lua_State *L) {
     }
 
     lua_pushnil(L);    
-    return 1;
+    lua_pushstring(L, "Database not available");    
+
+    return 2;
 }
 
 /*

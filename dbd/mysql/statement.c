@@ -34,22 +34,26 @@ static int statement_close(lua_State *L) {
 
     if (statement->metadata) {
 	mysql_free_result(statement->metadata);
+	statement->metadata = NULL;
     }
 
     if (statement->stmt) {
-	mysql_stmt_close(statement->stmt);	
+	mysql_stmt_close(statement->stmt);
+	statement->stmt = NULL;
     }
 
+    lua_pushboolean(L, 1);
     return 1;    
 }
 
 /*
- * success = statement:execute(...)
+ * success,err = statement:execute(...)
  */
 static int statement_execute(lua_State *L) {
     int n = lua_gettop(L);
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_MYSQL_STATEMENT); 
     int num_bind_params = n - 1;
+    int expected_params;
     
     MYSQL_BIND *bind = NULL;
     MYSQL_RES *metadata = NULL;
@@ -57,6 +61,24 @@ static int statement_execute(lua_State *L) {
     char *error_message = NULL;
 
     int p;
+
+    if (!statement->stmt) {
+	lua_pushboolean(L, 0);
+	lua_pushstring(L, "execute called on a closed or invalid statement");
+	return 2;
+    }
+
+    expected_params = mysql_stmt_param_count(statement->stmt);
+
+    if (expected_params != num_bind_params) {
+	/*
+         * mysql_stmt_bind_param does not handle this conndition,
+         * and the client library will segfault if these do no match
+         */ 
+	lua_pushboolean(L, 0);
+	lua_pushfstring(L, "Statement expected %d paramaters but received %d", expected_params, num_bind_params); 
+	return 2;
+    }
 
     bind = malloc(sizeof(MYSQL_BIND) * num_bind_params);
     memset(bind, 0, sizeof(MYSQL_BIND) * num_bind_params);
@@ -117,12 +139,14 @@ cleanup:
 	free(bind);
 
     if (error_message) {
-	luaL_error(L, error_message, mysql_stmt_error(statement->stmt));
-	return 0;
+	lua_pushboolean(L, 0);
+	lua_pushfstring(L, error_message, mysql_stmt_error(statement->stmt));
+	return 2;
     }
 
     statement->metadata = metadata;
 
+    lua_pushboolean(L, 1);
     return 1;
 }
 
@@ -133,9 +157,13 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
     const char *error_message = NULL;
 
     if (!statement->stmt) {
+	luaL_error(L, "fetch called on a closed or invalid statement");
+	return 0;
+    }
+
+    if (!statement->metadata) {
 	luaL_error(L, "fetch called before execute");
-	lua_pushnil(L);
-	return 1;
+	return 0;
     }
 
     if (!statement->metadata) {
@@ -268,13 +296,15 @@ int dbd_mysql_statement_create(lua_State *L, connection_t *conn, const char *sql
     MYSQL_STMT *stmt = mysql_stmt_init(conn->mysql);
 
     if (!stmt) {
-	luaL_error(L, "Error allocating statement handle: %s", mysql_error(conn->mysql));
-	return 0;
+	lua_pushnil(L);
+	lua_pushfstring(L, "Error allocating statement handle: %s", mysql_error(conn->mysql));
+	return 2;
     }
 
     if (mysql_stmt_prepare(stmt, sql_query, sql_len)) {
-	luaL_error(L, "Error preparing statement handle: %s", mysql_stmt_error(stmt));
-	return 0;
+	lua_pushnil(L);
+	lua_pushfstring(L, "Error preparing statement handle: %s", mysql_stmt_error(stmt));
+	return 2;
     }
 
     statement = (statement_t *)lua_newuserdata(L, sizeof(statement_t));

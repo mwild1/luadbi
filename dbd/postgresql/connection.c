@@ -53,13 +53,14 @@ static int connection_new(lua_State *L) {
     conn->postgresql = PQsetdbLogin(host, port, options, tty, db, user, password);
     conn->statement_id = 0;
 
-    if (PQstatus(conn->postgresql) == CONNECTION_OK) {
-        luaL_getmetatable(L, DBD_POSTGRESQL_CONNECTION);
-        lua_setmetatable(L, -2);
-    } else {
-	luaL_error(L, "Failed to connect to database: %s", PQerrorMessage(conn->postgresql));
+    if (PQstatus(conn->postgresql) != CONNECTION_OK) {
 	lua_pushnil(L);
+	lua_pushfstring(L, "Failed to connect to database: %s", PQerrorMessage(conn->postgresql));
+	return 2;
     }
+
+    luaL_getmetatable(L, DBD_POSTGRESQL_CONNECTION);
+    lua_setmetatable(L, -2);
 
     return 1;
 }
@@ -74,6 +75,7 @@ static int connection_close(lua_State *L) {
     if (conn->postgresql) {
 	PQfinish(conn->postgresql);
 	disconnect = 1;
+	conn->postgresql = NULL;
     }
 
     lua_pushboolean(L, disconnect);
@@ -109,7 +111,8 @@ static int connection_prepare(lua_State *L) {
     }
 
     lua_pushnil(L);    
-    return 1;
+    lua_pushstring(L, "Database not available");
+    return 2;
 }
 
 /*
