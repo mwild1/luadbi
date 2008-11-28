@@ -89,8 +89,7 @@ static int statement_execute(lua_State *L) {
 
 	const char *str = NULL;
 	size_t str_len;
-
-	double num;
+	double *num = NULL;
 
 	switch(type) {
 	    case LUA_TNIL:
@@ -99,11 +98,16 @@ static int statement_execute(lua_State *L) {
 		break;
 
 	    case LUA_TNUMBER:
-		num = luaL_checknumber(L, p);
+		/*
+		 * num needs to be it's own 
+		 * memory here
+                 */
+		num = (double *)malloc(sizeof(double));
+		*num = luaL_checknumber(L, p);
 
 		bind[i].buffer_type = MYSQL_TYPE_DOUBLE;
 		bind[i].is_null = (my_bool*)0;
-		bind[i].buffer = (char *)&num;
+		bind[i].buffer = (char *)num;
 		bind[i].length = 0;
 		break;
 
@@ -135,8 +139,24 @@ static int statement_execute(lua_State *L) {
     metadata = mysql_stmt_result_metadata(statement->stmt);
 
 cleanup:
-    if (bind)
+    if (bind) {
+	int i;
+
+	for (i = 0; i < num_bind_params; i++) {
+	    /*
+	     * Free the memory associated with
+	     * the allocation of double bind
+	     * params. If the interface is
+	     * extended with other types they
+	     * will need to be added here
+             */
+	    if (bind[i].buffer_type == MYSQL_TYPE_DOUBLE && bind[i].buffer) {
+		free(bind[i].buffer);
+	    }
+	}
+
 	free(bind);
+    }
 
     if (error_message) {
 	lua_pushboolean(L, 0);
