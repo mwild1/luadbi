@@ -195,7 +195,6 @@ static int statement_execute(lua_State *L) {
     statement->result = result;
 
     lua_pushboolean(L, 1);
-    lua_pushnil(L);
     return 1;
 }
 
