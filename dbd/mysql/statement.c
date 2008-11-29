@@ -88,7 +88,7 @@ static int statement_execute(lua_State *L) {
 	int i = p - 2;
 
 	const char *str = NULL;
-	size_t str_len;
+	size_t *str_len = NULL;
 	double *num = NULL;
 
 	switch(type) {
@@ -112,12 +112,13 @@ static int statement_execute(lua_State *L) {
 		break;
 
 	    case LUA_TSTRING:
-		str = luaL_checklstring(L, p, &str_len);
+		str_len = malloc(sizeof(size_t));
+		str = luaL_checklstring(L, p, str_len);
 
 		bind[i].buffer_type = MYSQL_TYPE_STRING;
 		bind[i].is_null = (my_bool*)0;
 		bind[i].buffer = (char *)str;
-		bind[i].length = &str_len;
+		bind[i].length = str_len;
 		break;
 
 	    default:
@@ -145,13 +146,17 @@ cleanup:
 	for (i = 0; i < num_bind_params; i++) {
 	    /*
 	     * Free the memory associated with
-	     * the allocation of double bind
-	     * params. If the interface is
+	     * the allocation of double and string
+	     * bind params. If the interface are
 	     * extended with other types they
 	     * will need to be added here
              */
-	    if (bind[i].buffer_type == MYSQL_TYPE_DOUBLE && bind[i].buffer) {
-		free(bind[i].buffer);
+	    if (bind[i].buffer_type == MYSQL_TYPE_DOUBLE) {
+		if (bind[i].buffer) 
+		    free(bind[i].buffer);
+	    } else if (bind[i].buffer_type == MYSQL_TYPE_STRING) {
+		if (bind[i].length)
+		    free(bind[i].length);
 	    }
 	}
 
