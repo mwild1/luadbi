@@ -69,8 +69,10 @@ int statement_execute(lua_State *L) {
     int n = lua_gettop(L);
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_SQLITE_STATEMENT);
     int p;
-    int err = 0;
-
+    int errflag = 0;
+    const char *errstr = NULL;
+    int expected_params;
+    int num_bind_params = n - 1;
 
     if (!statement->stmt) {
 	lua_pushboolean(L, 0);
@@ -89,39 +91,56 @@ int statement_execute(lua_State *L) {
 	return 2;
     }
 
+    expected_params = sqlite3_bind_parameter_count(statement->stmt);
+    if (expected_params != num_bind_params) {
+	/*
+         * sqlite3_reset does not handle this condition,
+         * and the client library will fill unset params
+         * with NULLs
+         */ 
+	lua_pushboolean(L, 0);
+	lua_pushfstring(L, DBI_ERR_PARAM_MISCOUNT, expected_params, num_bind_params); 
+	return 2;
+    }
+
     for (p = 2; p <= n; p++) {
 	int i = p - 1;
-
 	int type = lua_type(L, p);
+	char err[64];
 
 	switch(type) {
 	case LUA_TNIL:
-	    err = sqlite3_bind_null(statement->stmt, i) != SQLITE_OK;
+	    errflag = sqlite3_bind_null(statement->stmt, i) != SQLITE_OK;
 	    break;
 	case LUA_TNUMBER:
-	    err = sqlite3_bind_double(statement->stmt, i, lua_tonumber(L, p)) != SQLITE_OK;
+	    errflag = sqlite3_bind_double(statement->stmt, i, lua_tonumber(L, p)) != SQLITE_OK;
 	    break;
 	case LUA_TSTRING:
-	    err = sqlite3_bind_text(statement->stmt, i, lua_tostring(L, p), -1, SQLITE_STATIC) != SQLITE_OK;
+	    errflag = sqlite3_bind_text(statement->stmt, i, lua_tostring(L, p), -1, SQLITE_STATIC) != SQLITE_OK;
 	    break;
 	case LUA_TBOOLEAN:
-	    err = sqlite3_bind_int(statement->stmt, i, lua_toboolean(L, p)) != SQLITE_OK;
+	    errflag = sqlite3_bind_int(statement->stmt, i, lua_toboolean(L, p)) != SQLITE_OK;
 	    break;
 	default:
 	    /*
 	     * Unknown/unsupported value type
 	     */
-	    err = 1;
+	    errflag = 1;
+            snprintf(err, sizeof(err)-1, DBI_ERR_BINDING_TYPE_ERR, lua_typename(L, type));
+            errstr = err;
 	}
 
-
-	if (err)
+	if (errflag)
 	    break;
     }   
 
-    if (err) {
+    if (errflag) {
 	lua_pushboolean(L, 0);
-	lua_pushfstring(L, DBI_ERR_BINDING_PARAMS, sqlite3_errmsg(statement->sqlite));
+	if (errstr)
+	    lua_pushfstring(L, DBI_ERR_BINDING_PARAMS, errstr);
+	else
+	    lua_pushfstring(L, DBI_ERR_BINDING_PARAMS, sqlite3_errmsg(statement->sqlite));
+    
 	return 2;
     }
 

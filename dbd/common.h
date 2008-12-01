@@ -101,7 +101,6 @@ typedef enum lua_push_type {
 #define DBI_ERR_FETCH_INVALID	    "Fetch called on a closed or invalid statement"
 #define DBI_ERR_FETCH_FAILED	    "Fetch failed %s"
 #define DBI_ERR_PARAM_MISCOUNT	    "Statement expected %d parameters but received %d"
-#define	DBI_ERR_BINDING_UNKNOWN	    "Binding unknown or unsupported type"
 #define DBI_ERR_BINDING_PARAMS	    "Error binding statement parameters: %s"
 #define DBI_ERR_BINDING_EXEC	    "Error executing statement parameters: %s"
 #define DBI_ERR_FETCH_NO_EXECUTE    "Fetch called before execute"
@@ -111,3 +110,4 @@ typedef enum lua_push_type {
 #define DBI_ERR_PREP_STATEMENT	    "Error preparing statement handle: %s"
 #define DBI_ERR_INVALID_PORT	    "Invalid port: %d"
 #define DBI_ERR_ALLOC_RESULT	    "Error allocating result set: %s"
+#define DBI_ERR_BINDING_TYPE_ERR    "Unknown or unsupported type `%s'"

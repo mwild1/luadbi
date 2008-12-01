@@ -131,6 +131,7 @@ static int statement_execute(lua_State *L) {
     int num_bind_params = n - 1;   
     ExecStatusType status;
     int p;
+    const char *errstr = NULL;
 
     const char **params;
     PGresult *result = NULL;
@@ -144,21 +145,31 @@ static int statement_execute(lua_State *L) {
      */ 
     for (p = 2; p <= n; p++) {
 	int i = p - 2;	
+	int type = lua_type(L, p);
+	char err[64];
 
-	if (lua_isnil(L, p)) {
+	switch(type) {
+	case LUA_TNIL:
 	    params[i] = NULL;
-	} else {
-	    if (lua_isboolean(L, p)) 
-		/*
-		 * boolean values in postgresql can either be
-		 * t/f or 1/0. Pass integer values rather than
-		 * strings to maintain semantic compatibility
-		 * with other DBD drivers that pass booleans
-		 * as integers.
-		 */
-		params[i] = lua_toboolean(L, p) ?  "1" : "0";
-	    else 
-		params[i] = lua_tostring(L, p);
+	    break;
+	case LUA_TBOOLEAN:
+	    /*
+	     * boolean values in postgresql can either be
+	     * t/f or 1/0. Pass integer values rather than
+	     * strings to maintain semantic compatibility
+	     * with other DBD drivers that pass booleans
+	     * as integers.
+	     */
+	    params[i] = lua_toboolean(L, p) ?  "1" : "0";
+	    break;
+	case LUA_TNUMBER:
+	case LUA_TSTRING:
+	    params[i] = lua_tostring(L, p);
+	    break;
+	default:
+	    snprintf(err, sizeof(err)-1, DBI_ERR_BINDING_TYPE_ERR, lua_typename(L, type));
+	    errstr = err;
+	    goto cleanup;
 	}
     }
 
@@ -172,7 +183,14 @@ static int statement_execute(lua_State *L) {
         0
     );
 
+cleanup:
     free(params);
+
+    if (errstr) {
+	lua_pushboolean(L, 0);
+	lua_pushfstring(L, DBI_ERR_BINDING_PARAMS, errstr);
+	return 2;
+    }
 
     if (!result) {
 	lua_pushboolean(L, 0);

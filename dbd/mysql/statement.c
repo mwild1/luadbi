@@ -59,6 +59,7 @@ static int statement_execute(lua_State *L) {
     MYSQL_RES *metadata = NULL;
 
     char *error_message = NULL;
+    char *errstr = NULL;
 
     int p;
 
@@ -72,7 +73,7 @@ static int statement_execute(lua_State *L) {
 
     if (expected_params != num_bind_params) {
 	/*
-         * mysql_stmt_bind_param does not handle this conndition,
+         * mysql_stmt_bind_param does not handle this condition,
          * and the client library will segfault if these do no match
          */ 
 	lua_pushboolean(L, 0);
@@ -91,6 +92,7 @@ static int statement_execute(lua_State *L) {
 	size_t *str_len = NULL;
 	double *num = NULL;
 	int *boolean = NULL;
+	char err[64];
 
 	switch(type) {
 	    case LUA_TNIL:
@@ -132,7 +134,9 @@ static int statement_execute(lua_State *L) {
 		break;
 
 	    default:
-		error_message = DBI_ERR_BINDING_UNKNOWN; 
+		snprintf(err, sizeof(err)-1, DBI_ERR_BINDING_TYPE_ERR, lua_typename(L, type));
+		errstr = err;
+		error_message = DBI_ERR_BINDING_PARAMS;
 		goto cleanup;
 	}
     }
@@ -175,7 +179,7 @@ cleanup:
 
     if (error_message) {
 	lua_pushboolean(L, 0);
-	lua_pushfstring(L, error_message, mysql_stmt_error(statement->stmt));
+	lua_pushfstring(L, error_message, errstr ? errstr : mysql_stmt_error(statement->stmt));
 	return 2;
     }
 
