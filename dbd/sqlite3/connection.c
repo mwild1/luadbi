@@ -12,8 +12,8 @@ static int connection_new(lua_State *L) {
     connection_t *conn = NULL;
 
     /* db */
-    switch (n) {
-    case 1:
+    switch(n) {
+    default:
 	if (lua_isnil(L, 1) == 0) 
 	    db = luaL_checkstring(L, 1);
     }

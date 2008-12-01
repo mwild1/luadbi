@@ -90,11 +90,21 @@ static int statement_execute(lua_State *L) {
 	const char *str = NULL;
 	size_t *str_len = NULL;
 	double *num = NULL;
+	int *boolean = NULL;
 
 	switch(type) {
 	    case LUA_TNIL:
 		bind[i].buffer_type = MYSQL_TYPE_NULL;
 		bind[i].is_null = (my_bool*)1;
+		break;
+
+	    case LUA_TBOOLEAN:
+		boolean = (int *)malloc(sizeof(int));
+		*boolean = lua_toboolean(L, p);
+		bind[i].buffer_type = MYSQL_TYPE_LONG;
+		bind[i].is_null = (my_bool*)0;
+		bind[i].buffer = (char *)boolean;
+		bind[i].length = 0;
 		break;
 
 	    case LUA_TNUMBER:
@@ -103,7 +113,7 @@ static int statement_execute(lua_State *L) {
 		 * memory here
                  */
 		num = (double *)malloc(sizeof(double));
-		*num = luaL_checknumber(L, p);
+		*num = lua_tonumber(L, p);
 
 		bind[i].buffer_type = MYSQL_TYPE_DOUBLE;
 		bind[i].is_null = (my_bool*)0;
@@ -113,7 +123,7 @@ static int statement_execute(lua_State *L) {
 
 	    case LUA_TSTRING:
 		str_len = malloc(sizeof(size_t));
-		str = luaL_checklstring(L, p, str_len);
+		str = lua_tolstring(L, p, str_len);
 
 		bind[i].buffer_type = MYSQL_TYPE_STRING;
 		bind[i].is_null = (my_bool*)0;
@@ -151,7 +161,7 @@ cleanup:
 	     * extended with other types they
 	     * will need to be added here
              */
-	    if (bind[i].buffer_type == MYSQL_TYPE_DOUBLE) {
+	    if (bind[i].buffer_type == MYSQL_TYPE_DOUBLE || bind[i].buffer_type == MYSQL_TYPE_LONG) {
 		if (bind[i].buffer) 
 		    free(bind[i].buffer);
 	    } else if (bind[i].buffer_type == MYSQL_TYPE_STRING) {

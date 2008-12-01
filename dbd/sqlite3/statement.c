@@ -92,19 +92,28 @@ int statement_execute(lua_State *L) {
     for (p = 2; p <= n; p++) {
 	int i = p - 1;
 
-	if (lua_isnil(L, p)) {
-	    if (sqlite3_bind_null(statement->stmt, i) != SQLITE_OK) {
-		err = 1;
-	    }
-	} else if (lua_isnumber(L, p)) {
-	    if (sqlite3_bind_double(statement->stmt, i, luaL_checknumber(L, p)) != SQLITE_OK) {
-		err = 1;
-	    }
-	} else if (lua_isstring(L, p)) {
-	    if (sqlite3_bind_text(statement->stmt, i, luaL_checkstring(L, p), -1, SQLITE_STATIC) != SQLITE_OK) {
-		err = 1;
-	    }
+	int type = lua_type(L, p);
+
+	switch(type) {
+	case LUA_TNIL:
+	    err = sqlite3_bind_null(statement->stmt, i) != SQLITE_OK;
+	    break;
+	case LUA_TNUMBER:
+	    err = sqlite3_bind_double(statement->stmt, i, lua_tonumber(L, p)) != SQLITE_OK;
+	    break;
+	case LUA_TSTRING:
+	    err = sqlite3_bind_text(statement->stmt, i, lua_tostring(L, p), -1, SQLITE_STATIC) != SQLITE_OK;
+	    break;
+	case LUA_TBOOLEAN:
+	    err = sqlite3_bind_int(statement->stmt, i, lua_toboolean(L, p)) != SQLITE_OK;
+	    break;
+	default:
+	    /*
+	     * Unknown/unsupported value type
+	     */
+	    err = 1;
 	}
+
 
 	if (err)
 	    break;
