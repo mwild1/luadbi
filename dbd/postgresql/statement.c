@@ -219,6 +219,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
     int tuple = statement->tuple++;
     int i;
     int num_columns;
+    int d = 1;
 
     if (!statement->result) {
 	luaL_error(L, DBI_ERR_FETCH_INVALID);
@@ -237,7 +238,6 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 
     num_columns = PQnfields(statement->result);
     lua_newtable(L);
-    int d = 1;
     for (i = 0; i < num_columns; i++) {
 	const char *name = PQfname(statement->result, i);
 
@@ -314,10 +314,19 @@ static int next_iterator(lua_State *L) {
 }
 
 /*
- * iterfunc = statement:fetch(named_indexes)
+ * table = statement:fetch(named_indexes)
  */
-
 static int statement_fetch(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_STATEMENT);
+    int named_columns = lua_toboolean(L, 2);
+
+    return statement_fetch_impl(L, statement, named_columns);
+}
+
+/*
+ * iterfunc = statement:rows(named_indexes)
+ */
+static int statement_rows(lua_State *L) {
     if (lua_gettop(L) == 1) {
         lua_pushvalue(L, 1);
         lua_pushboolean(L, 0);
@@ -328,16 +337,6 @@ static int statement_fetch(lua_State *L) {
 
     lua_pushcclosure(L, next_iterator, 2);
     return 1;
-}
-
-/*
- * table = statement:row(named_indexes)
- */
-static int statement_row(lua_State *L) {
-    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_STATEMENT);
-    int named_columns = lua_toboolean(L, 2);
-
-    return statement_fetch_impl(L, statement, named_columns);
 }
 
 /*
@@ -407,7 +406,7 @@ int dbd_postgresql_statement(lua_State *L) {
 	{"close", statement_close},
 	{"execute", statement_execute},
 	{"fetch", statement_fetch},
-	{"row", statement_row},
+	{"rows", statement_rows},
 	{NULL, NULL}
     };
 
