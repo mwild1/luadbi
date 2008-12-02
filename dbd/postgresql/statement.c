@@ -139,6 +139,7 @@ static int statement_execute(lua_State *L) {
     statement->tuple = 0;
 
     params = malloc(num_bind_params * sizeof(params));
+    memset(params, 0, num_bind_params * sizeof(params));
 
     /*
      * convert and copy parameters into a string array
@@ -214,8 +215,7 @@ cleanup:
 /*
  * must be called after an execute
  */
-static int statement_fetch_impl(lua_State *L, int named_columns) {
-    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_STATEMENT);
+static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_columns) {
     int tuple = statement->tuple++;
     int i;
     int num_columns;
@@ -237,8 +237,8 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
 
     num_columns = PQnfields(statement->result);
     lua_newtable(L);
+    int d = 1;
     for (i = 0; i < num_columns; i++) {
-	int d = 1;
 	const char *name = PQfname(statement->result, i);
 
 	if (PQgetisnull(statement->result, tuple, i)) {
@@ -305,18 +305,39 @@ static int statement_fetch_impl(lua_State *L, int named_columns) {
     return 1;    
 }
 
-/*
- * array = statement:fetch()
- */
-static int statement_fetch(lua_State *L) {
-    return statement_fetch_impl(L, 0);
+
+static int next_iterator(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, lua_upvalueindex(1), DBD_POSTGRESQL_STATEMENT);
+    int named_columns = lua_toboolean(L, lua_upvalueindex(2));
+
+    return statement_fetch_impl(L, statement, named_columns);
 }
 
 /*
- * hashmap = statement:fetchtable()
+ * iterfunc = statement:fetch(named_indexes)
  */
-static int statement_fetchtable(lua_State *L) {
-    return statement_fetch_impl(L, 1);
+
+static int statement_fetch(lua_State *L) {
+    if (lua_gettop(L) == 1) {
+        lua_pushvalue(L, 1);
+        lua_pushboolean(L, 0);
+    } else {
+        lua_pushvalue(L, 1);
+        lua_pushboolean(L, lua_toboolean(L, 2));
+    }
+
+    lua_pushcclosure(L, next_iterator, 2);
+    return 1;
+}
+
+/*
+ * table = statement:row(named_indexes)
+ */
+static int statement_row(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_STATEMENT);
+    int named_columns = lua_toboolean(L, 2);
+
+    return statement_fetch_impl(L, statement, named_columns);
 }
 
 /*
@@ -386,7 +407,7 @@ int dbd_postgresql_statement(lua_State *L) {
 	{"close", statement_close},
 	{"execute", statement_execute},
 	{"fetch", statement_fetch},
-	{"fetchtable", statement_fetchtable},
+	{"row", statement_row},
 	{NULL, NULL}
     };
 
