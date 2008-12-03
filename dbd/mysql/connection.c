@@ -48,9 +48,30 @@ static int connection_new(lua_State *L) {
 	return 2;
     }
 
+    /*
+     * by default turn off autocommit
+     */
+    mysql_autocommit(conn->mysql, 0);
+
     luaL_getmetatable(L, DBD_MYSQL_CONNECTION);
     lua_setmetatable(L, -2);
 
+    return 1;
+}
+
+/*
+ * success = connection:autocommit(on)
+ */
+static int connection_autocommit(lua_State *L) {
+    connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_MYSQL_CONNECTION);
+    int on = lua_toboolean(L, 2); 
+    int err = 0;
+
+    if (conn->mysql) {
+	err = mysql_autocommit(conn->mysql, on);
+    }
+
+    lua_pushboolean(L, !err);
     return 1;
 }
 
@@ -68,6 +89,21 @@ static int connection_close(lua_State *L) {
     }
 
     lua_pushboolean(L, disconnect);
+    return 1;
+}
+
+/*
+ * success = connection:commit()
+ */
+static int connection_commit(lua_State *L) {
+    connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_MYSQL_CONNECTION);
+    int err = 0;
+
+    if (conn->mysql) {
+	err = mysql_commit(conn->mysql);
+    }
+
+    lua_pushboolean(L, !err);
     return 1;
 }
 
@@ -103,6 +139,21 @@ static int connection_prepare(lua_State *L) {
 }
 
 /*
+ * success = connection:rollback()
+ */
+static int connection_rollback(lua_State *L) {
+    connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_MYSQL_CONNECTION);
+    int err = 0;
+
+    if (conn->mysql) {
+	err = mysql_rollback(conn->mysql);
+    }
+
+    lua_pushboolean(L, !err);
+    return 1;
+}
+
+/*
  * __gc
  */
 static int connection_gc(lua_State *L) {
@@ -114,9 +165,12 @@ static int connection_gc(lua_State *L) {
 
 int dbd_mysql_connection(lua_State *L) {
     static const luaL_Reg connection_methods[] = {
+	{"autocommit", connection_autocommit},
 	{"close", connection_close},
+	{"commit", connection_commit},
 	{"ping", connection_ping},
 	{"prepare", connection_prepare},
+	{"rollback", connection_rollback},
 	{NULL, NULL}
     };
 

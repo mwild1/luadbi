@@ -2,6 +2,27 @@
 
 int dbd_sqlite3_statement_create(lua_State *L, connection_t *conn, const char *sql_query);
 
+static int run(connection_t *conn, const char *command) {
+    int res = sqlite3_exec(conn->sqlite, command, NULL, NULL, NULL);
+
+    return res != SQLITE_OK;
+}
+
+static int commit(connection_t *conn) {
+    return run(conn, "COMMIT");
+}
+
+
+static int begin(connection_t *conn) {
+    return run(conn, "BEGIN");
+}
+
+
+static int rollback(connection_t *conn) {
+    return run(conn, "ROLLBACK");
+}
+
+
 /* 
  * connection,err = DBD.SQLite3.New(dbfile)
  */
@@ -26,11 +47,36 @@ static int connection_new(lua_State *L) {
 	return 2;
     }
 
+    conn->autocommit = 0;
+    begin(conn);
+
     luaL_getmetatable(L, DBD_SQLITE_CONNECTION);
     lua_setmetatable(L, -2);
 
     return 1;
 }
+
+/*
+ * success = connection:autocommit(on)
+ */
+static int connection_autocommit(lua_State *L) {
+    connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_SQLITE_CONNECTION);
+    int on = lua_toboolean(L, 2); 
+    int err = 1;
+
+    if (conn->sqlite) {
+	if (on)
+	    err = rollback(conn);
+	else
+	    err = begin(conn);
+
+	conn->autocommit = on;	
+    }
+
+    lua_pushboolean(L, !err);
+    return 1;
+}
+
 
 /*
  * success = connection:close()
@@ -49,6 +95,25 @@ static int connection_close(lua_State *L) {
     return 1;
 }
 
+/*
+ * success = connection:commit()
+ */
+static int connection_commit(lua_State *L) {
+    connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_SQLITE_CONNECTION);
+    int err = 1;
+
+    if (conn->sqlite) {
+	commit(conn);
+
+	if (!conn->autocommit)
+	    err = begin(conn);
+	else
+	    err = 1;
+    }
+
+    lua_pushboolean(L, !err);
+    return 1;
+}
 
 /*
  * ok = connection:ping()
@@ -81,6 +146,26 @@ static int connection_prepare(lua_State *L) {
 }
 
 /*
+ * success = connection:rollback()
+ */
+static int connection_rollback(lua_State *L) {
+    connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_SQLITE_CONNECTION);
+    int err = 1;
+
+    if (conn->sqlite) {
+	rollback(conn);
+
+	if (!conn->autocommit)
+	    err = begin(conn);
+	else
+	    err = 1;
+    }
+
+    lua_pushboolean(L, !err);
+    return 1;
+}
+
+/*
  * __gc 
  */
 static int connection_gc(lua_State *L) {
@@ -95,9 +180,12 @@ int dbd_sqlite3_connection(lua_State *L) {
      * instance methods
      */
     static const luaL_Reg connection_methods[] = {
+	{"autocommit", connection_autocommit},
 	{"close", connection_close},
+	{"commit", connection_commit},
 	{"ping", connection_ping},
 	{"prepare", connection_prepare},
+	{"rollback", connection_rollback},
 	{NULL, NULL}
     };
 

@@ -9,6 +9,7 @@
  */
 typedef struct _connection {
     sqlite3 *sqlite;
+    int autocommit;
 } connection_t;
 
 /*

@@ -2,6 +2,37 @@
 
 int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char *sql_query);
 
+static int run(connection_t *conn, const char *command) {
+    PGresult *result = PQexec(conn->postgresql, command);
+    ExecStatusType status;
+
+    if (!result)
+        return 1;
+
+    status = PQresultStatus(result);
+    PQclear(result);
+
+    if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK)
+        return 1;
+ 
+    return 0;
+}
+
+static int commit(connection_t *conn) {
+    return run(conn, "COMMIT");
+}
+
+
+static int begin(connection_t *conn) {
+    return run(conn, "BEGIN");
+}
+
+
+static int rollback(connection_t *conn) {
+    return run(conn, "ROLLBACK");
+}
+
+
 /*
  * connection = DBD.PostgreSQL.New(dbname, user, password, host, port)
  */
@@ -52,6 +83,8 @@ static int connection_new(lua_State *L) {
 
     conn->postgresql = PQsetdbLogin(host, port, options, tty, db, user, password);
     conn->statement_id = 0;
+    conn->autocommit = 0;
+    begin(conn);
 
     if (PQstatus(conn->postgresql) != CONNECTION_OK) {
 	lua_pushnil(L);
@@ -66,6 +99,27 @@ static int connection_new(lua_State *L) {
 }
 
 /*
+ * success = connection:autocommit(on)
+ */
+static int connection_autocommit(lua_State *L) {
+    connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_CONNECTION);
+    int on = lua_toboolean(L, 2); 
+    int err = 0;
+
+    if (conn->postgresql) {
+	if (on)
+	    err = rollback(conn);
+	else
+	    err = begin(conn);
+
+	conn->autocommit = on;	
+    }
+
+    lua_pushboolean(L, !err);
+    return 1;
+}
+
+/*
  * success = connection:close()
  */
 static int connection_close(lua_State *L) {
@@ -73,12 +127,39 @@ static int connection_close(lua_State *L) {
     int disconnect = 0;   
 
     if (conn->postgresql) {
+	/*
+	 * if autocommit is turned off, we probably
+	 * want to rollback any outstanding transactions.
+	 */
+	if (!conn->autocommit)
+	    rollback(conn);
+
 	PQfinish(conn->postgresql);
 	disconnect = 1;
 	conn->postgresql = NULL;
     }
 
     lua_pushboolean(L, disconnect);
+    return 1;
+}
+
+/*
+ * success = connection:commit()
+ */
+static int connection_commit(lua_State *L) {
+    connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_CONNECTION);
+    int err = 0;
+
+    if (conn->postgresql) {
+	commit(conn);
+
+	if (!conn->autocommit)
+	    err = begin(conn);
+	else
+	    err = 1;
+    }
+
+    lua_pushboolean(L, !err);
     return 1;
 }
 
@@ -116,6 +197,26 @@ static int connection_prepare(lua_State *L) {
 }
 
 /*
+ * success = connection:rollback()
+ */
+static int connection_rollback(lua_State *L) {
+    connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_CONNECTION);
+    int err = 0;
+
+    if (conn->postgresql) {
+	rollback(conn);
+
+	if (!conn->autocommit)
+	    err = begin(conn);
+	else
+	    err = 1;
+    }
+
+    lua_pushboolean(L, !err);
+    return 1;
+}
+
+/*
  * __gc
  */
 static int connection_gc(lua_State *L) {
@@ -127,9 +228,12 @@ static int connection_gc(lua_State *L) {
 
 int dbd_postgresql_connection(lua_State *L) {
     static const luaL_Reg connection_methods[] = {
+	{"autocommit", connection_autocommit},
 	{"close", connection_close},
+	{"commit", connection_commit},
 	{"ping", connection_ping},
 	{"prepare", connection_prepare},
+	{"rollback", connection_rollback},
 	{NULL, NULL}
     };
 

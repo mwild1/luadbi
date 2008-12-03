@@ -17,6 +17,7 @@
  */
 typedef struct _connection {
     PGconn *postgresql;
+    int autocommit;
     unsigned int statement_id; /* sequence for statement IDs */
 } connection_t;
 
