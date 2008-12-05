@@ -36,7 +36,7 @@ static int connection_new(lua_State *L) {
     SQLINTEGER sqlcode;
     SQLSMALLINT length;
 
-    /* db, user, password, host, port */
+    /* db, user, password */
     switch(n) {
     case 5:
     case 4:
