@@ -110,4 +110,5 @@ typedef enum lua_push_type {
 #define DBI_ERR_PREP_STATEMENT	    "Error preparing statement handle: %s"
 #define DBI_ERR_INVALID_PORT	    "Invalid port: %d"
 #define DBI_ERR_ALLOC_RESULT	    "Error allocating result set: %s"
+#define DBI_ERR_DESC_RESULT	    "Error describing result set: %s"
 #define DBI_ERR_BINDING_TYPE_ERR    "Unknown or unsupported type `%s'"

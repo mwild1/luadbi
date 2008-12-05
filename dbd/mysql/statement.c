@@ -54,6 +54,9 @@ static int statement_execute(lua_State *L) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_MYSQL_STATEMENT); 
     int num_bind_params = n - 1;
     int expected_params;
+
+    unsigned char *buffer = NULL;
+    int offset = 0;
     
     MYSQL_BIND *bind = NULL;
     MYSQL_RES *metadata = NULL;
@@ -101,8 +104,11 @@ static int statement_execute(lua_State *L) {
 		break;
 
 	    case LUA_TBOOLEAN:
-		boolean = (int *)malloc(sizeof(int));
+		buffer = realloc(buffer, offset + sizeof(int));
+		boolean = (int *)buffer + offset;
+		offset += sizeof(int);
 		*boolean = lua_toboolean(L, p);
+
 		bind[i].buffer_type = MYSQL_TYPE_LONG;
 		bind[i].is_null = (my_bool*)0;
 		bind[i].buffer = (char *)boolean;
@@ -114,7 +120,9 @@ static int statement_execute(lua_State *L) {
 		 * num needs to be it's own 
 		 * memory here
                  */
-		num = (double *)malloc(sizeof(double));
+		buffer = realloc(buffer, offset + sizeof(double));
+		num = (double *)buffer + offset;
+		offset += sizeof(double);
 		*num = lua_tonumber(L, p);
 
 		bind[i].buffer_type = MYSQL_TYPE_DOUBLE;
@@ -124,7 +132,9 @@ static int statement_execute(lua_State *L) {
 		break;
 
 	    case LUA_TSTRING:
-		str_len = malloc(sizeof(size_t));
+		buffer = realloc(buffer, offset + sizeof(size_t));
+		str_len = (size_t *)buffer + offset;
+		offset += sizeof(size_t);
 		str = lua_tolstring(L, p, str_len);
 
 		bind[i].buffer_type = MYSQL_TYPE_STRING;
@@ -154,28 +164,13 @@ static int statement_execute(lua_State *L) {
     metadata = mysql_stmt_result_metadata(statement->stmt);
 
 cleanup:
-    if (bind) {
-	int i;
+    /*
+     * free the buffer with a resize to 0
+     */
+    realloc(buffer, 0);
 
-	for (i = 0; i < num_bind_params; i++) {
-	    /*
-	     * Free the memory associated with
-	     * the allocation of double and string
-	     * bind params. If the interface are
-	     * extended with other types they
-	     * will need to be added here
-             */
-	    if (bind[i].buffer_type == MYSQL_TYPE_DOUBLE || bind[i].buffer_type == MYSQL_TYPE_LONG) {
-		if (bind[i].buffer) 
-		    free(bind[i].buffer);
-	    } else if (bind[i].buffer_type == MYSQL_TYPE_STRING) {
-		if (bind[i].length)
-		    free(bind[i].length);
-	    }
-	}
-
+    if (bind) 
 	free(bind);
-    }
 
     if (error_message) {
 	lua_pushboolean(L, 0);

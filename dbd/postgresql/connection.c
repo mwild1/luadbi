@@ -75,8 +75,10 @@ static int connection_new(lua_State *L) {
 	if (lua_isnil(L, 2) == 0) 
 	    user = luaL_checkstring(L, 2);
     case 1:
-	if (lua_isnil(L, 1) == 0) 
-	    db = luaL_checkstring(L, 1);
+	/*
+	 * db is the only mandatory parameter
+	 */
+	db = luaL_checkstring(L, 1);
     }
 
     conn = (connection_t *)lua_newuserdata(L, sizeof(connection_t));

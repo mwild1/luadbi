@@ -7,6 +7,7 @@ local name_to_module = {
     MySQL = 'dbdmysql',
     PostgreSQL = 'dbdpostgresql',
     SQLite3 = 'dbdsqlite3',
+    DB2 = 'dbddb2',
 }
 
 local string = require('string')
