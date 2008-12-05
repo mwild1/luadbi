@@ -37,7 +37,7 @@ dbddb2: $(DB2_OBJS)
 	$(CC) $(CFLAGS) $(DB2_OBJS) -o $(DBDDB2) $(DB2_LDFLAGS)
 
 clean:
-	$(RM) $(MYSQL_OBJS) $(PSQL_OBJS) $(SQLITE3_OBJS) $(DBDMYSQL) $(DBDPSQL) $(DBDSQLITE3)
+	$(RM) $(MYSQL_OBJS) $(PSQL_OBJS) $(SQLITE3_OBJS) $(DB2_OBJS) $(DBDMYSQL) $(DBDPSQL) $(DBDSQLITE3) $(DBDDB2)
 
 build/dbd_mysql_connection.o: dbd/mysql/connection.c dbd/mysql/dbd_mysql.h dbd/common.h 
 	$(CC) -c -o $@ $< $(CFLAGS)
