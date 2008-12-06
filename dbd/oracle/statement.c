@@ -52,8 +52,6 @@ int statement_execute(lua_State *L) {
     int p;
     int errflag = 0;
     const char *errstr = NULL;
-    int expected_params;
-    int num_bind_params = n - 1;
     int num_columns;
     int rc;
 

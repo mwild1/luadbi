@@ -65,6 +65,7 @@ static int statement_execute(lua_State *L) {
     int offset = 0;
     resultset_t *resultset = NULL; 
     bindparams_t *bind; /* variable to read the results */
+    SQLSMALLINT num_params;
 
     SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
     SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
@@ -74,6 +75,26 @@ static int statement_execute(lua_State *L) {
     if (!statement->stmt) {
 	lua_pushboolean(L, 0);
 	lua_pushstring(L, DBI_ERR_EXECUTE_INVALID);
+	return 2;
+    }
+
+    rc = SQLNumParams(statement->stmt, &num_params);
+    if (rc != SQL_SUCCESS) {
+        SQLGetDiagRec(SQL_HANDLE_STMT, statement->stmt, 1, sqlstate, &sqlcode, message, SQL_MAX_MESSAGE_LENGTH + 1, &length);
+
+        lua_pushboolean(L, 0);
+        lua_pushfstring(L, DBI_ERR_PREP_STATEMENT, message);
+        return 2;
+    }
+
+    if (num_params != n-1) {
+        /*
+	 * SQLExecute does not handle this condition,
+ 	 * and the client library will fill unset params
+	 * with NULLs
+	 */
+	lua_pushboolean(L, 0);
+        lua_pushfstring(L, DBI_ERR_PARAM_MISCOUNT, num_params, n-1);
 	return 2;
     }
 
