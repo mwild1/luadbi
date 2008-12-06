@@ -1,22 +1,5 @@
 #include "dbd_db2.h"
 
-#define MAX_COLUMNS	255
-
-#ifndef max
-#define max(a,b) (a > b ? a : b)
-#endif
-
-static const char *strlower(char *in) {
-    char *s = in;
-
-    while(*s) {
-	*s= (*s <= 'Z' && *s >= 'A') ? (*s - 'A') + 'a' : *s;
-	s++;
-    }
-
-    return in;
-}
-
 static lua_push_type_t db2_to_lua_push(unsigned int db2_type, int len) {
     lua_push_type_t lua_type;
 

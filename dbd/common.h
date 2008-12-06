@@ -88,6 +88,13 @@ typedef enum lua_push_type {
 } lua_push_type_t;
 
 /*
+ * used for placeholder translations
+ * from '?' to the .\d{4}
+ */
+#define MAX_PLACEHOLDERS        9999 
+#define MAX_PLACEHOLDER_SIZE    (1+4) /* .\d{4} */
+
+/*
  *
  * Common error strings
  * defined here for consistency in driver implementations
@@ -112,3 +119,15 @@ typedef enum lua_push_type {
 #define DBI_ERR_ALLOC_RESULT	    "Error allocating result set: %s"
 #define DBI_ERR_DESC_RESULT	    "Error describing result set: %s"
 #define DBI_ERR_BINDING_TYPE_ERR    "Unknown or unsupported type `%s'"
+
+/*
+ * convert string to lower case
+ */
+const char *strlower(char *in);
+
+/*
+ * replace '?' placeholders with .\d+ placeholders
+ * to be compatible with the native driver API
+ */
+char *replace_placeholders(lua_State *L, char native_prefix, const char *sql);
+

@@ -8,6 +8,7 @@ local name_to_module = {
     PostgreSQL = 'dbdpostgresql',
     SQLite3 = 'dbdsqlite3',
     DB2 = 'dbddb2',
+    Oracle = 'dbdoracle',
 }
 
 local string = require('string')
