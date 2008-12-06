@@ -8,7 +8,7 @@ COMMON_LDFLAGS=
 MYSQL_LDFLAGS=$(COMMON_LDFLAGS) -lmysqlclient
 PSQL_LDFLAGS=$(COMMON_LDFLAGS) -lpq 
 SQLITE3_LDFLAGS=$(COMMON_LDFLAGS) -lsqlite3 
-DB2_LDFLAGS=$(COMMON_LDFLAGS) -L/opt/ibm/db2exc/V9.5/lib32 -ldb2 
+DB2_LDFLAGS=$(COMMON_LDFLAGS) -L/opt/ibm/db2exc/V9.5/lib64 -L/opt/ibm/db2exc/V9.5/lib32 -ldb2 
 ORACLE_LDFLAGS=$(COMMON_LDFLAGS) -L/usr/lib/oracle/xe/app/oracle/product/10.2.0/client/lib/ -locixe 
 
 DBDMYSQL=dbdmysql.so

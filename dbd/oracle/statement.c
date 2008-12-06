@@ -314,7 +314,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
                     LUA_PUSH_ARRAY_STRING(d, data);
                 }
             } else if (lua_push == LUA_PUSH_BOOLEAN) {
-		int val = 1;
+		int val = atoi(data);
 
                 if (named_columns) {
                     LUA_PUSH_ATTRIB_BOOL(name, val);
