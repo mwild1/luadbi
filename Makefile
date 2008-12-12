@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g -pedantic -O2 -Wall -shared -fpic -I /usr/include/lua5.1 -I /usr/include/mysql -I /usr/include/postgresql/ -I /opt/ibm/db2exc/V9.5/include/ -I /usr/lib/oracle/xe/app/oracle/product/10.2.0/client/rdbms/public/ -I . 
+CFLAGS=-g -pedantic -O2 -Wall -shared -fpic -I /usr/include/lua5.1 -I /usr/include/mysql -I /usr/include/postgresql/ -I /opt/ibm/db2exc/V9.5/include/ -I /usr/lib/oracle/xe/app/oracle/product/10.2.0/client/rdbms/public/ -I .
 AR=ar rcu
 RANLIB=ranlib
 RM=rm -f

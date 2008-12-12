@@ -6,6 +6,7 @@ static lua_push_type_t postgresql_to_lua_push(unsigned int postgresql_type) {
     switch(postgresql_type) {
     case INT2OID:
     case INT4OID:
+    case INT8OID:
         lua_type =  LUA_PUSH_INTEGER;
         break;
 
