@@ -26,6 +26,20 @@ static lua_push_type_t postgresql_to_lua_push(unsigned int postgresql_type) {
     return lua_type;
 }
 
+/*
+ * num_affected_rows = statement:affected()
+ */
+static int statement_affected(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_STATEMENT);
+
+    if (!statement->result) {
+        luaL_error(L, DBI_ERR_INVALID_STATEMENT);
+    }
+
+    lua_pushinteger(L, atoi(PQcmdTuples(statement->result)));
+
+    return 1;
+}
 
 /*
  * success = statement:close()
@@ -243,6 +257,21 @@ static int statement_fetch(lua_State *L) {
 }
 
 /*
+ * num_rows = statement:rowcount()
+ */
+static int statement_rowcount(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_POSTGRESQL_STATEMENT);
+
+    if (!statement->result) {
+        luaL_error(L, DBI_ERR_INVALID_STATEMENT);
+    }
+
+    lua_pushinteger(L, PQntuples(statement->result));
+
+    return 1;
+}
+
+/*
  * iterfunc = statement:rows(named_indexes)
  */
 static int statement_rows(lua_State *L) {
@@ -322,9 +351,11 @@ int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char
 
 int dbd_postgresql_statement(lua_State *L) {
     static const luaL_Reg statement_methods[] = {
+	{"affected", statement_affected},
 	{"close", statement_close},
 	{"execute", statement_execute},
 	{"fetch", statement_fetch},
+	{"rowcount", statement_rowcount},
 	{"rows", statement_rows},
 	{NULL, NULL}
     };

@@ -24,23 +24,23 @@ SQLITE3_OBJS=$(OBJS) build/dbd_sqlite3_main.o build/dbd_sqlite3_connection.o bui
 DB2_OBJS=$(OBJS) build/dbd_db2_main.o build/dbd_db2_connection.o build/dbd_db2_statement.o
 ORACLE_OBJS=$(OBJS) build/dbd_oracle_main.o build/dbd_oracle_connection.o build/dbd_oracle_statement.o
 
-free: dbdmysql dbdpsql dbdsqlite3
+free: mysql psql sqlite3
 
-all:  dbdmysql dbdpsql dbdsqlite3 dbddb2 dbdoracle
+all:  mysql psql sqlite3 db2 oracle
 
-dbdmysql: $(MYSQL_OBJS)
+mysql: $(MYSQL_OBJS)
 	$(CC) $(CFLAGS) $(MYSQL_OBJS) -o $(DBDMYSQL) $(MYSQL_LDFLAGS)
 
-dbdpsql: $(PSQL_OBJS)
+psql: $(PSQL_OBJS)
 	$(CC) $(CFLAGS) $(PSQL_OBJS) -o $(DBDPSQL) $(PSQL_LDFLAGS)
 
-dbdsqlite3: $(SQLITE3_OBJS)
+sqlite3: $(SQLITE3_OBJS)
 	$(CC) $(CFLAGS) $(SQLITE3_OBJS) -o $(DBDSQLITE3) $(SQLITE3_LDFLAGS)
 
-dbddb2: $(DB2_OBJS)
+db2: $(DB2_OBJS)
 	$(CC) $(CFLAGS) $(DB2_OBJS) -o $(DBDDB2) $(DB2_LDFLAGS)
 
-dbdoracle: $(ORACLE_OBJS)
+oracle: $(ORACLE_OBJS)
 	$(CC) $(CFLAGS) $(ORACLE_OBJS) -o $(DBDORACLE) $(ORACLE_LDFLAGS)
 
 clean:

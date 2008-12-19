@@ -19,5 +19,6 @@ typedef struct _statement {
     sqlite3_stmt *stmt;
     sqlite3 *sqlite;
     int more_data;
+    int affected;
 } statement_t;
 

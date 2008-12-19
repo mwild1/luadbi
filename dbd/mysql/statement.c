@@ -27,6 +27,21 @@ static lua_push_type_t mysql_to_lua_push(unsigned int mysql_type) {
 } 
 
 /*
+ * num_affected_rows = statement:affected()
+ */
+static int statement_affected(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_MYSQL_STATEMENT);
+
+    if (!statement->stmt) {
+        luaL_error(L, DBI_ERR_INVALID_STATEMENT);
+    }
+
+    lua_pushinteger(L, mysql_stmt_affected_rows(statement->stmt));
+
+    return 1;
+}
+
+/*
  * success = statement:close()
  */
 static int statement_close(lua_State *L) {
@@ -162,6 +177,10 @@ static int statement_execute(lua_State *L) {
     }
 
     metadata = mysql_stmt_result_metadata(statement->stmt);
+
+    if (metadata) {
+        mysql_stmt_store_result(statement->stmt);
+    }
 
 cleanup:
     /*
@@ -315,9 +334,23 @@ static int statement_fetch(lua_State *L) {
 }
 
 /*
+ * num_rows = statement:rowcount()
+ */
+static int statement_rowcount(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_MYSQL_STATEMENT);
+
+    if (!statement->stmt) {
+        luaL_error(L, DBI_ERR_INVALID_STATEMENT);
+    }
+
+    lua_pushinteger(L, mysql_stmt_num_rows(statement->stmt));
+
+    return 1;
+}
+
+/*
  * iterfunc = statement:rows(named_indexes)
  */
-
 static int statement_rows(lua_State *L) {
     if (lua_gettop(L) == 1) {			
 	lua_pushvalue(L, 1);
@@ -373,9 +406,11 @@ int dbd_mysql_statement_create(lua_State *L, connection_t *conn, const char *sql
 
 int dbd_mysql_statement(lua_State *L) {
     static const luaL_Reg statement_methods[] = {
+        {"affected", statement_affected},
 	{"close", statement_close},
 	{"execute", statement_execute},
 	{"fetch", statement_fetch},
+	{"rowcount", statement_rowcount},
 	{"rows", statement_rows},
 	{NULL, NULL}
     };

@@ -119,6 +119,8 @@ typedef enum lua_push_type {
 #define DBI_ERR_ALLOC_RESULT	    "Error allocating result set: %s"
 #define DBI_ERR_DESC_RESULT	    "Error describing result set: %s"
 #define DBI_ERR_BINDING_TYPE_ERR    "Unknown or unsupported type `%s'"
+#define DBI_ERR_INVALID_STATEMENT   "Invalid statement handle"
+#define DBI_ERR_NOT_IMPLEMENTED     "Method %s.%s is not implemented"
 
 /*
  * convert string to lower case

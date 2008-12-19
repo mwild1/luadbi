@@ -25,6 +25,35 @@ static lua_push_type_t oracle_to_lua_push(unsigned int oracle_type, int null) {
 }
 
 /*
+ * num_affected_rows = statement:affected()
+ */
+static int statement_affected(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_ORACLE_STATEMENT);
+    int affected;
+    int rc; 
+
+    if (!statement->stmt) {
+        luaL_error(L, DBI_ERR_INVALID_STATEMENT);
+    }
+
+    /* 
+     * get number of affected rows 
+     */
+    rc = OCIAttrGet(
+	(dvoid *)statement->stmt, 
+	(ub4)OCI_HTYPE_STMT,
+        (dvoid *)&affected, 
+	(ub4 *)0, 
+	(ub4)OCI_ATTR_ROW_COUNT,
+        statement->conn->err
+    );
+
+    lua_pushinteger(L, affected);
+
+    return 1;
+}
+
+/*
  * success = statement:close()
  */
 int statement_close(lua_State *L) {
@@ -351,6 +380,15 @@ static int statement_fetch(lua_State *L) {
 }
 
 /*
+ * num_rows = statement:rowcount()
+ */
+static int statement_rowcount(lua_State *L) {
+    luaL_error(L, DBI_ERR_NOT_IMPLEMENTED, DBD_ORACLE_STATEMENT, "rowcount");
+
+    return 0;
+}
+
+/*
  * iterfunc = statement:rows(named_indexes)
  */
 static int statement_rows(lua_State *L) {
@@ -405,9 +443,11 @@ int dbd_oracle_statement_create(lua_State *L, connection_t *conn, const char *sq
 
 int dbd_oracle_statement(lua_State *L) {
     static const luaL_Reg statement_methods[] = {
+	{"affected", statement_affected},
 	{"close", statement_close},
 	{"execute", statement_execute},
 	{"fetch", statement_fetch},
+	{"rowcount", statement_rowcount},
 	{"rows", statement_rows},
 	{NULL, NULL}
     };

@@ -22,6 +22,26 @@ static lua_push_type_t db2_to_lua_push(unsigned int db2_type, int len) {
 }
 
 /*
+ * num_affected_rows = statement:affected()
+ */
+static int statement_affected(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_DB2_STATEMENT);
+    SQLRETURN rc = SQL_SUCCESS;
+    SQLINTEGER affected;
+
+    if (!statement->stmt) {
+        luaL_error(L, DBI_ERR_INVALID_STATEMENT);
+    }
+
+    rc = SQLRowCount(statement->stmt, &affected);
+
+
+    lua_pushinteger(L, affected);
+
+    return 1;
+}
+
+/*
  * success = statement:close()
  */
 static int statement_close(lua_State *L) {
@@ -335,6 +355,15 @@ static int statement_fetch(lua_State *L) {
 }
 
 /*
+ * num_rows = statement:rowcount()
+ */
+static int statement_rowcount(lua_State *L) {
+    luaL_error(L, DBI_ERR_NOT_IMPLEMENTED, DBD_DB2_STATEMENT, "rowcount");
+
+    return 0;
+}
+
+/*
  * iterfunc = statement:rows(named_indexes)
  */
 static int statement_rows(lua_State *L) {
@@ -381,8 +410,8 @@ int dbd_db2_statement_create(lua_State *L, connection_t *conn, const char *sql_q
 
     /*
      * turn off deferred prepare
-     * statements will be sent to the server at prepare timr,
-     * and therefor we can catch errors then rather 
+     * statements will be sent to the server at prepare time,
+     * and therefore we can catch errors now rather 
      * than at execute time
      */
     rc = SQLSetStmtAttr(stmt,SQL_ATTR_DEFERRED_PREPARE,(SQLPOINTER)SQL_DEFERRED_PREPARE_OFF,0);
@@ -410,9 +439,11 @@ int dbd_db2_statement_create(lua_State *L, connection_t *conn, const char *sql_q
 
 int dbd_db2_statement(lua_State *L) {
     static const luaL_Reg statement_methods[] = {
+	{"affected", statement_affected},
 	{"close", statement_close},
 	{"execute", statement_execute},
 	{"fetch", statement_fetch},
+	{"rowcount", statement_rowcount},
 	{"rows", statement_rows},
 	{NULL, NULL}
     };
