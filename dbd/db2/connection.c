@@ -223,8 +223,6 @@ static int connection_rollback(lua_State *L) {
  * __gc
  */
 static int connection_gc(lua_State *L) {
-    printf("Freeing connection\n");
-
     /* always close the connection */
     connection_close(L);
 
