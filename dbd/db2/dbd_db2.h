@@ -41,6 +41,7 @@ typedef struct _connection {
 typedef struct _statement {
     resultset_t * resultset;
     bindparams_t * bind;
+    unsigned char *buffer;
     SQLSMALLINT num_result_columns; /* variable for SQLNumResultCols */
 
     SQLHANDLE stmt;

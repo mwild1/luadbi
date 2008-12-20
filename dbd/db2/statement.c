@@ -1,5 +1,7 @@
 #include "dbd_db2.h"
 
+#define BIND_BUFFER_SIZE    1024
+
 static lua_push_type_t db2_to_lua_push(unsigned int db2_type, int len) {
     lua_push_type_t lua_type;
 
@@ -80,7 +82,7 @@ static int statement_execute(lua_State *L) {
     int errflag = 0;
     const char *errstr = NULL;
     SQLRETURN rc = SQL_SUCCESS;
-    unsigned char b[1024];
+    unsigned char b[BIND_BUFFER_SIZE];
     unsigned char *buffer = &b[0];
     int offset = 0;
     resultset_t *resultset = NULL; 
@@ -116,6 +118,10 @@ static int statement_execute(lua_State *L) {
 	lua_pushboolean(L, 0);
         lua_pushfstring(L, DBI_ERR_PARAM_MISCOUNT, num_params, n-1);
 	return 2;
+    }
+
+    if (num_params > (BIND_BUFFER_SIZE/sizeof(double))) {
+        luaL_error(L, "Too many bind params: %d", num_params);
     }
 
     for (p = 2; p <= n; p++) {

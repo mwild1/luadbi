@@ -70,8 +70,7 @@ static int statement_execute(lua_State *L) {
     int num_bind_params = n - 1;
     int expected_params;
 
-    unsigned char b[1024];
-    unsigned char *buffer = &b[0];
+    unsigned char *buffer = NULL;
     int offset = 0;
     
     MYSQL_BIND *bind = NULL;
@@ -100,13 +99,15 @@ static int statement_execute(lua_State *L) {
 	return 2;
     }
 
-    bind = malloc(sizeof(MYSQL_BIND) * num_bind_params);
-    
-    if (bind == NULL) {
-        luaL_error(L, "Could not alloc bind params\n");
-    }
+    if (num_bind_params) {
+        bind = malloc(sizeof(MYSQL_BIND) * num_bind_params);
+        if (bind == NULL) {
+            luaL_error(L, "Could not alloc bind params\n");
+        }
 
-    memset(bind, 0, sizeof(MYSQL_BIND) * num_bind_params);
+        buffer = malloc(num_bind_params * sizeof(size_t));
+        memset(bind, 0, sizeof(MYSQL_BIND) * num_bind_params);
+    }
 
     for (p = 2; p <= n; p++) {
 	int type = lua_type(L, p);
@@ -188,6 +189,10 @@ static int statement_execute(lua_State *L) {
 cleanup:
     if (bind) { 
 	free(bind);
+    }
+
+    if (buffer) {
+        free(buffer);
     }
 
     if (error_message) {
