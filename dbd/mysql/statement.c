@@ -70,7 +70,8 @@ static int statement_execute(lua_State *L) {
     int num_bind_params = n - 1;
     int expected_params;
 
-    unsigned char *buffer = NULL;
+    unsigned char b[1024];
+    unsigned char *buffer = &b[0];
     int offset = 0;
     
     MYSQL_BIND *bind = NULL;
@@ -100,6 +101,11 @@ static int statement_execute(lua_State *L) {
     }
 
     bind = malloc(sizeof(MYSQL_BIND) * num_bind_params);
+    
+    if (bind == NULL) {
+        luaL_error(L, "Could not alloc bind params\n");
+    }
+
     memset(bind, 0, sizeof(MYSQL_BIND) * num_bind_params);
 
     for (p = 2; p <= n; p++) {
@@ -119,7 +125,6 @@ static int statement_execute(lua_State *L) {
 		break;
 
 	    case LUA_TBOOLEAN:
-		buffer = realloc(buffer, offset + sizeof(int));
 		boolean = (int *)buffer + offset;
 		offset += sizeof(int);
 		*boolean = lua_toboolean(L, p);
@@ -135,7 +140,6 @@ static int statement_execute(lua_State *L) {
 		 * num needs to be it's own 
 		 * memory here
                  */
-		buffer = realloc(buffer, offset + sizeof(double));
 		num = (double *)buffer + offset;
 		offset += sizeof(double);
 		*num = lua_tonumber(L, p);
@@ -147,7 +151,6 @@ static int statement_execute(lua_State *L) {
 		break;
 
 	    case LUA_TSTRING:
-		buffer = realloc(buffer, offset + sizeof(size_t));
 		str_len = (size_t *)buffer + offset;
 		offset += sizeof(size_t);
 		str = lua_tolstring(L, p, str_len);
@@ -183,13 +186,9 @@ static int statement_execute(lua_State *L) {
     }
 
 cleanup:
-    /*
-     * free the buffer with a resize to 0
-     */
-    realloc(buffer, 0);
-
-    if (bind) 
+    if (bind) { 
 	free(bind);
+    }
 
     if (error_message) {
 	lua_pushboolean(L, 0);
@@ -222,6 +221,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 	lua_pushnil(L);
 	return 1;
     }
+
 
     column_count = mysql_num_fields(statement->metadata);
 

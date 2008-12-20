@@ -157,6 +157,7 @@ static int connection_quote(lua_State *L) {
     quoted_len = mysql_real_escape_string(conn->mysql, to, from, len);
 
     lua_pushlstring(L, to, quoted_len);
+    free(to);
 
     return 1;
 }

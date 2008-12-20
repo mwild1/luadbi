@@ -46,10 +46,9 @@ static int statement_affected(lua_State *L) {
  */
 static int statement_close(lua_State *L) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_DB2_STATEMENT);
-    SQLRETURN rc = SQL_SUCCESS;
 
     if (statement->stmt) {
-	rc = SQLFreeHandle(SQL_HANDLE_STMT, statement->stmt);
+        SQLFreeStmt(statement->stmt, SQL_CLOSE);
 
 	if (statement->resultset) 
 	    free(statement->resultset);
@@ -81,7 +80,8 @@ static int statement_execute(lua_State *L) {
     int errflag = 0;
     const char *errstr = NULL;
     SQLRETURN rc = SQL_SUCCESS;
-    unsigned char *buffer = NULL;
+    unsigned char b[1024];
+    unsigned char *buffer = &b[0];
     int offset = 0;
     resultset_t *resultset = NULL; 
     bindparams_t *bind; /* variable to read the results */
@@ -134,7 +134,6 @@ static int statement_execute(lua_State *L) {
 	    errflag = rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO;
 	    break;
 	case LUA_TNUMBER:
-	    buffer = realloc(buffer, offset + sizeof(double));
 	    num = (double *)buffer + offset;
 	    *num = lua_tonumber(L, p);
 	    offset += sizeof(double);
@@ -147,7 +146,6 @@ static int statement_execute(lua_State *L) {
 	    errflag = rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO;
 	    break;
 	case LUA_TBOOLEAN:
-	    buffer = realloc(buffer, offset + sizeof(int));
 	    boolean = (int *)buffer + offset;
 	    *boolean = lua_toboolean(L, p);
 	    offset += sizeof(int);
@@ -168,7 +166,6 @@ static int statement_execute(lua_State *L) {
     }
 
     if (errflag) {
-	realloc(buffer, 0);
 	lua_pushboolean(L, 0);
 
 	if (errstr) {
@@ -252,11 +249,6 @@ static int statement_execute(lua_State *L) {
 	statement->bind = bind;
     }
 
-    /*
-     * free the buffer with a resize to 0
-     */
-    realloc(buffer, 0);
-
     lua_pushboolean(L, 1);
     return 1;
 }
@@ -268,6 +260,11 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
     int i;
     int d;
 
+    SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
+    SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
+    SQLINTEGER sqlcode;
+    SQLSMALLINT length;
+
     SQLRETURN rc = SQL_SUCCESS;
  
     if (!statement->resultset || !statement->bind) {
@@ -278,15 +275,22 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
     /* fetch each row, and display */
     rc = SQLFetch(statement->stmt);
     if (rc == SQL_NO_DATA_FOUND) {
+        SQLFreeStmt(statement->stmt, SQL_RESET_PARAMS);
 	lua_pushnil(L);
 	return 1;
+    }
+
+    if (rc != SQL_SUCCESS) {
+        SQLGetDiagRec(SQL_HANDLE_STMT, statement->stmt, 1, sqlstate, &sqlcode, message, SQL_MAX_MESSAGE_LENGTH + 1, &length);
+
+        luaL_error(L, DBI_ERR_FETCH_FAILED, message);
     }
 
     d = 1; 
     lua_newtable(L);
     for (i = 0; i < statement->num_result_columns; i++) {
 	lua_push_type_t lua_push = db2_to_lua_push(statement->resultset[i].type, statement->bind[i].len);
-	const char *name = strlower((char *)statement->resultset[i].name);
+	const char *name = strlower(statement->resultset[i].name);
 	double val;
 	char *value = (char *)statement->bind[i].buffer;
 
