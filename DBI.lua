@@ -67,5 +67,11 @@ function Do(dbh, sql, ...)
 	return false, err
     end
 
-    return sth:execute(...)
+    local ok, err = sth:execute(...)
+
+    if not ok then
+        return false, err
+    end
+
+    return sth:affected()
 end

@@ -141,6 +141,27 @@ static int connection_prepare(lua_State *L) {
 }
 
 /*
+ * quoted = connection:quote(str)
+ */
+static int connection_quote(lua_State *L) {
+    connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_MYSQL_CONNECTION);
+    size_t len;
+    const char *from = luaL_checklstring(L, 2, &len);
+    char *to = (char *)calloc(len*2+1, sizeof(char));
+    int quoted_len;
+
+    if (!conn->mysql) {
+        luaL_error(L, DBI_ERR_DB_UNAVAILABLE);
+    }
+
+    quoted_len = mysql_real_escape_string(conn->mysql, to, from, len);
+
+    lua_pushlstring(L, to, quoted_len);
+
+    return 1;
+}
+
+/*
  * success = connection:rollback()
  */
 static int connection_rollback(lua_State *L) {
@@ -172,6 +193,7 @@ int dbd_mysql_connection(lua_State *L) {
 	{"commit", connection_commit},
 	{"ping", connection_ping},
 	{"prepare", connection_prepare},
+	{"quote", connection_quote},
 	{"rollback", connection_rollback},
 	{NULL, NULL}
     };

@@ -197,6 +197,14 @@ static int connection_prepare(lua_State *L) {
 }
 
 /*
+ * quoted = connection:quote(str)
+ */
+static int connection_quote(lua_State *L) {
+    luaL_error(L, DBI_ERR_NOT_IMPLEMENTED, DBD_DB2_CONNECTION, "quote");
+    return 0;
+}
+
+/*
  * success = connection:rollback()
  */
 static int connection_rollback(lua_State *L) {
@@ -228,6 +236,7 @@ int dbd_db2_connection(lua_State *L) {
 	{"commit", connection_commit},
 	{"ping", connection_ping},
 	{"prepare", connection_prepare},
+	{"quote", connection_quote},
 	{"rollback", connection_rollback},
 	{NULL, NULL}
     };
