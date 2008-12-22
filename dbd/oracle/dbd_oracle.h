@@ -34,5 +34,6 @@ typedef struct _statement {
     OCIStmt *stmt;
     connection_t *conn;
     int num_columns;
+    bindparams_t *bind;
 } statement_t;
 

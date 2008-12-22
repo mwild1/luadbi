@@ -52,8 +52,10 @@ static int statement_close(lua_State *L) {
     if (statement->stmt) {
         SQLFreeStmt(statement->stmt, SQL_CLOSE);
 
-	if (statement->resultset) 
+	if (statement->resultset) {
 	    free(statement->resultset);
+	    statement->resultset = NULL;
+	}
 
 	if (statement->bind) {
 	    int i;
@@ -63,6 +65,7 @@ static int statement_close(lua_State *L) {
 	    }
 
 	    free(statement->bind);
+	    statement->bind = NULL;
 	}
 
 	statement->num_result_columns = 0;

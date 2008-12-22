@@ -68,6 +68,11 @@ int statement_close(lua_State *L) {
 	statement->stmt = NULL;
     }
 
+    if (statement->bind) {
+	free(statement->bind);
+	statement->bind = NULL;
+    }
+
     lua_pushboolean(L, ok);
     return 1;
 }
@@ -254,8 +259,9 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 	return 0;
     }
 
-    bind = (bindparams_t *)malloc(sizeof(bindparams_t) * statement->num_columns);
-    memset(bind, 0, sizeof(bindparams_t) * statement->num_columns);
+    statement->bind = (bindparams_t *)malloc(sizeof(bindparams_t) * statement->num_columns);
+    memset(statement->bind, 0, sizeof(bindparams_t) * statement->num_columns);
+    bind = statement->bind;
 
     for (i = 0; i < statement->num_columns; i++) {
 	rc = OCIParamGet(statement->stmt, OCI_HTYPE_STMT, statement->conn->err, (dvoid **)&bind[i].param, i+1);
@@ -434,6 +440,7 @@ int dbd_oracle_statement_create(lua_State *L, connection_t *conn, const char *sq
     statement->conn = conn;
     statement->stmt = stmt;
     statement->num_columns = 0;
+    statement->bind = NULL;
 
     luaL_getmetatable(L, DBD_ORACLE_STATEMENT);
     lua_setmetatable(L, -2);
