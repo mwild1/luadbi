@@ -75,15 +75,14 @@ static int statement_close(lua_State *L) {
  * success = statement:execute(...)
  */
 static int statement_execute(lua_State *L) {
-    int n = lua_gettop(L);
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_DB2_STATEMENT);
+    int n = lua_gettop(L);
     int p;
     int i;
     int errflag = 0;
     const char *errstr = NULL;
     SQLRETURN rc = SQL_SUCCESS;
-    unsigned char b[BIND_BUFFER_SIZE];
-    unsigned char *buffer = &b[0];
+    unsigned char *buffer = NULL;
     int offset = 0;
     resultset_t *resultset = NULL; 
     bindparams_t *bind; /* variable to read the results */
@@ -120,8 +119,8 @@ static int statement_execute(lua_State *L) {
 	return 2;
     }
 
-    if (num_params > (BIND_BUFFER_SIZE/sizeof(double))) {
-        luaL_error(L, "Too many bind params: %d", num_params);
+    if (num_params > 0) {
+        buffer = (unsigned char *)malloc(sizeof(double) * num_params);
     }
 
     for (p = 2; p <= n; p++) {
@@ -140,7 +139,7 @@ static int statement_execute(lua_State *L) {
 	    errflag = rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO;
 	    break;
 	case LUA_TNUMBER:
-	    num = (double *)buffer + offset;
+	    num = (double *)(buffer + offset);
 	    *num = lua_tonumber(L, p);
 	    offset += sizeof(double);
 	    rc = SQLBindParameter(statement->stmt, i, SQL_PARAM_INPUT, SQL_C_DOUBLE, SQL_DECIMAL, 10, 0, (SQLPOINTER)num, 0, NULL);
@@ -152,7 +151,7 @@ static int statement_execute(lua_State *L) {
 	    errflag = rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO;
 	    break;
 	case LUA_TBOOLEAN:
-	    boolean = (int *)buffer + offset;
+	    boolean = (int *)(buffer + offset);
 	    *boolean = lua_toboolean(L, p);
 	    offset += sizeof(int);
 	    rc = SQLBindParameter(statement->stmt, i, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, (SQLPOINTER)boolean, len, NULL);
@@ -172,6 +171,9 @@ static int statement_execute(lua_State *L) {
     }
 
     if (errflag) {
+        if (buffer) 
+            free(buffer);
+
 	lua_pushboolean(L, 0);
 
 	if (errstr) {
@@ -187,6 +189,9 @@ static int statement_execute(lua_State *L) {
 
     rc = SQLExecute(statement->stmt);
     if (rc != SQL_SUCCESS) {
+        if (buffer) 
+            free(buffer);
+
 	SQLGetDiagRec(SQL_HANDLE_STMT, statement->stmt, 1, sqlstate, &sqlcode, message, SQL_MAX_MESSAGE_LENGTH + 1, &length);
 
 	lua_pushnil(L);
@@ -221,6 +226,9 @@ static int statement_execute(lua_State *L) {
                         NULL);
 
 	    if (rc != SQL_SUCCESS) {
+                if (buffer) 
+                    free(buffer);
+
 		SQLGetDiagRec(SQL_HANDLE_STMT, statement->stmt, 1, sqlstate, &sqlcode, message, SQL_MAX_MESSAGE_LENGTH + 1, &length);
 
 		lua_pushnil(L);
@@ -243,6 +251,9 @@ static int statement_execute(lua_State *L) {
                        &bind[i].len);
 
 	    if (rc != SQL_SUCCESS) {
+                if (buffer) 
+                    free(buffer);
+
 		SQLGetDiagRec(SQL_HANDLE_STMT, statement->stmt, 1, sqlstate, &sqlcode, message, SQL_MAX_MESSAGE_LENGTH + 1, &length);
 
 		lua_pushnil(L);
@@ -254,6 +265,9 @@ static int statement_execute(lua_State *L) {
 	statement->resultset = resultset;
 	statement->bind = bind;
     }
+
+    if (buffer) 
+        free(buffer);
 
     lua_pushboolean(L, 1);
     return 1;

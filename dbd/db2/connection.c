@@ -129,10 +129,9 @@ static int connection_autocommit(lua_State *L) {
 static int connection_close(lua_State *L) {
     connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_DB2_CONNECTION);
     int disconnect = 0;   
+    SQLRETURN rc = SQL_SUCCESS;
 
     if (conn->db2) {
-	SQLRETURN rc = SQL_SUCCESS;
-
 	rollback(conn);
 
 	/* disconnect from the database */
@@ -141,10 +140,12 @@ static int connection_close(lua_State *L) {
 	/* free connection handle */
 	rc = SQLFreeHandle(SQL_HANDLE_DBC, conn->db2);
 
+	conn->db2 = 0;
+    }
+
+    if (conn->env) {
 	/* free environment handle */
 	rc = SQLFreeHandle(SQL_HANDLE_ENV, conn->env);
-
-	conn->db2 = 0;
     }
 
     lua_pushboolean(L, disconnect);
