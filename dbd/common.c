@@ -12,8 +12,8 @@ const char *strlower(char *in) {
 }
 
 /*
- * replace '?' placeholders with $\d+ placeholders
- * to be compatible with PSQL API
+ * replace '?' placeholders with {native_prefix}\d+ placeholders
+ * to be compatible with native API
  */
 char *replace_placeholders(lua_State *L, char native_prefix, const char *sql) {
     size_t len = strlen(sql);
@@ -76,7 +76,7 @@ char *replace_placeholders(lua_State *L, char native_prefix, const char *sql) {
 	    size_t n;
 
 	    if (ph_num > MAX_PLACEHOLDERS) {
-		luaL_error(L, "Sorry, you are using more than %d placeholders. Use ${num} format instead", MAX_PLACEHOLDERS);
+		luaL_error(L, "Sorry, you are using more than %d placeholders. Use %c{num} format instead", MAX_PLACEHOLDERS, native_prefix);
 	    }
 
 	    n = snprintf(&newsql[newpos], MAX_PLACEHOLDER_SIZE, format_str, ph_num++);

@@ -50,7 +50,7 @@ static int statement_close(lua_State *L) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_DB2_STATEMENT);
 
     if (statement->stmt) {
-        SQLFreeStmt(statement->stmt, SQL_CLOSE);
+        SQLFreeHandle(SQL_HANDLE_STMT, statement->stmt);
 
 	if (statement->resultset) {
 	    free(statement->resultset);
