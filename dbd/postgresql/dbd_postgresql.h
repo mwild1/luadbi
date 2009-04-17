@@ -5,9 +5,9 @@
 
 /* 
  * length of a prepared statement ID
- * \d{17}\0
+ * dbd-postgresql-\d{17}\0
  */
-#define IDLEN 18
+#define IDLEN 15+17+1
 
 #define DBD_POSTGRESQL_CONNECTION   "DBD.PostgreSQL.Connection"
 #define DBD_POSTGRESQL_STATEMENT    "DBD.PostgreSQL.Statement"

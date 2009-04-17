@@ -78,6 +78,16 @@ int statement_close(lua_State *L) {
 }
 
 /*
+ *  column_names = statement:columns()
+ */
+static int statement_rowcount(lua_State *L) {
+    luaL_error(L, DBI_ERR_NOT_IMPLEMENTED, DBD_ORACLE_STATEMENT, "columns");
+
+    return 0;
+}
+
+
+/*
  * success,err = statement:execute(...)
  */
 int statement_execute(lua_State *L) {
@@ -452,6 +462,7 @@ int dbd_oracle_statement(lua_State *L) {
     static const luaL_Reg statement_methods[] = {
 	{"affected", statement_affected},
 	{"close", statement_close},
+	{"columns", statement_columns},
 	{"execute", statement_execute},
 	{"fetch", statement_fetch},
 	{"rowcount", statement_rowcount},

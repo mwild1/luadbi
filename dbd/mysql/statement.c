@@ -62,6 +62,35 @@ static int statement_close(lua_State *L) {
 }
 
 /*
+ * column_names = statement:columns()
+ */
+static int statement_columns(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_MYSQL_STATEMENT);
+
+    MYSQL_FIELD *fields;
+    int i;
+    int num_columns;
+    int d = 1;
+
+    if (!statement->stmt) {
+        luaL_error(L, DBI_ERR_INVALID_STATEMENT);
+        return 0;
+    }
+
+    fields = mysql_fetch_fields(statement->metadata);
+    num_columns = mysql_num_fields(statement->metadata);
+    lua_newtable(L);
+    for (i = 0; i < num_columns; i++) {
+	const char *name = fields[i].name;
+
+        LUA_PUSH_ARRAY_STRING(d, name);
+    }
+
+    return 1;
+}
+
+
+/*
  * success,err = statement:execute(...)
  */
 static int statement_execute(lua_State *L) {
@@ -221,12 +250,6 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 	luaL_error(L, DBI_ERR_FETCH_NO_EXECUTE);
 	return 0;
     }
-
-    if (!statement->metadata) {
-	lua_pushnil(L);
-	return 1;
-    }
-
 
     column_count = mysql_num_fields(statement->metadata);
 
@@ -413,6 +436,7 @@ int dbd_mysql_statement(lua_State *L) {
     static const luaL_Reg statement_methods[] = {
         {"affected", statement_affected},
 	{"close", statement_close},
+	{"columns", statement_columns},
 	{"execute", statement_execute},
 	{"fetch", statement_fetch},
 	{"rowcount", statement_rowcount},
