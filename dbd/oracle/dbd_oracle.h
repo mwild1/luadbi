@@ -35,5 +35,7 @@ typedef struct _statement {
     connection_t *conn;
     int num_columns;
     bindparams_t *bind;
+
+    int metadata;
 } statement_t;
 

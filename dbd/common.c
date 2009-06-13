@@ -45,7 +45,7 @@ char *replace_placeholders(lua_State *L, char native_prefix, const char *sql) {
     
     /*
      * this is MAX_PLACEHOLDER_SIZE-1 because the '?' is 
-     * replaced with '$'
+     * replaced with '{native_prefix}'
      */ 
     extra_space = num_placeholders * (MAX_PLACEHOLDER_SIZE-1); 
 

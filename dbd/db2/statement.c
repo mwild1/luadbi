@@ -77,10 +77,32 @@ static int statement_close(lua_State *L) {
 /*
  *  column_names = statement:columns()
  */
-static int statement_rowcount(lua_State *L) {
-    luaL_error(L, DBI_ERR_NOT_IMPLEMENTED, DBD_DB2_STATEMENT, "columns");
+static int statement_columns(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_DB2_STATEMENT);
 
-    return 0;
+    int i;
+    int d;
+
+    SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
+    SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
+    SQLINTEGER sqlcode;
+    SQLSMALLINT length;
+
+    SQLRETURN rc = SQL_SUCCESS;
+ 
+    if (!statement->resultset || !statement->bind) {
+	lua_pushnil(L);
+	return 1;
+    }
+
+    d = 1; 
+    lua_newtable(L);
+    for (i = 0; i < statement->num_result_columns; i++) {
+	const char *name = strlower(statement->resultset[i].name);
+	LUA_PUSH_ARRAY_STRING(d, name);
+    }
+
+    return 1;
 }
 
 /*

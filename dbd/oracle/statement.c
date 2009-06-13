@@ -25,6 +25,62 @@ static lua_push_type_t oracle_to_lua_push(unsigned int oracle_type, int null) {
 }
 
 /*
+ * Fetch metadata from the database
+ */
+
+static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
+    bindparams_t *bind;
+    int i;
+
+    char errbuf[100];
+    int errcode;
+    int rc;
+
+    if (statement->metadata)
+	return;
+
+    statement->bind = (bindparams_t *)malloc(sizeof(bindparams_t) * statement->num_columns);
+    memset(statement->bind, 0, sizeof(bindparams_t) * statement->num_columns);
+    bind = statement->bind;
+
+    for (i = 0; i < statement->num_columns; i++) {
+	rc = OCIParamGet(statement->stmt, OCI_HTYPE_STMT, statement->conn->err, (dvoid **)&bind[i].param, i+1);
+	if (rc) {
+	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	    luaL_error(L, "param get %s", errbuf);
+	}
+
+	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(bind[i].name), (ub4 *)&(bind[i].name_len), OCI_ATTR_NAME, statement->conn->err);
+	if (rc) {
+	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	    luaL_error(L, "name get %s", errbuf);
+	}
+
+	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(bind[i].data_type), (ub4 *)0, OCI_ATTR_DATA_TYPE, statement->conn->err);
+	if (rc) {
+	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	    luaL_error(L, "datatype get %s", errbuf);
+	}
+
+	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(bind[i].max_len), 0, OCI_ATTR_DATA_SIZE, statement->conn->err);
+	if (rc) {
+	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	    luaL_error(L, "datasize get %s", errbuf);
+	}
+
+	bind[i].data = calloc(bind[i].max_len+1, sizeof(char));
+	rc = OCIDefineByPos(statement->stmt, &bind[i].define, statement->conn->err, (ub4)i+1, bind[i].data, bind[i].max_len, SQLT_STR, (dvoid *)&(bind[i].null), (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT);
+	if (rc) {
+	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4)sizeof(errbuf), OCI_HTYPE_ERROR);
+	    luaL_error(L, "define by pos %s", errbuf);
+	}
+    }
+
+    statement->metadata = 1;
+}
+
+
+/*
  * num_affected_rows = statement:affected()
  */
 static int statement_affected(lua_State *L) {
@@ -80,10 +136,33 @@ int statement_close(lua_State *L) {
 /*
  *  column_names = statement:columns()
  */
-static int statement_rowcount(lua_State *L) {
-    luaL_error(L, DBI_ERR_NOT_IMPLEMENTED, DBD_ORACLE_STATEMENT, "columns");
+static int statement_columns(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_ORACLE_STATEMENT);
+    int rc;
 
-    return 0;
+    bindparams_t *bind;
+
+    char errbuf[100];
+    int errcode;
+
+    int i;
+    int d = 1;
+
+    if (!statement->stmt) {
+        luaL_error(L, DBI_ERR_INVALID_STATEMENT);
+        return 0;
+    }
+
+    statement_fetch_metadata(L, statement);    
+
+    lua_newtable(L);
+    for (i = 0; i < statement->num_columns; i++) {
+	const char *name = strlower(statement->bind[i].name);
+
+	LUA_PUSH_ARRAY_STRING(d, name);
+    }
+
+    return 1;
 }
 
 
@@ -269,42 +348,8 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 	return 0;
     }
 
-    statement->bind = (bindparams_t *)malloc(sizeof(bindparams_t) * statement->num_columns);
-    memset(statement->bind, 0, sizeof(bindparams_t) * statement->num_columns);
+    statement_fetch_metadata(L, statement);    
     bind = statement->bind;
-
-    for (i = 0; i < statement->num_columns; i++) {
-	rc = OCIParamGet(statement->stmt, OCI_HTYPE_STMT, statement->conn->err, (dvoid **)&bind[i].param, i+1);
-	if (rc) {
-	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
-	    luaL_error(L, "param get %s", errbuf);
-	}
-
-	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(bind[i].name), (ub4 *)&(bind[i].name_len), OCI_ATTR_NAME, statement->conn->err);
-	if (rc) {
-	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
-	    luaL_error(L, "name get %s", errbuf);
-	}
-
-	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(bind[i].data_type), (ub4 *)0, OCI_ATTR_DATA_TYPE, statement->conn->err);
-	if (rc) {
-	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
-	    luaL_error(L, "datatype get %s", errbuf);
-	}
-
-	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(bind[i].max_len), 0, OCI_ATTR_DATA_SIZE, statement->conn->err);
-	if (rc) {
-	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
-	    luaL_error(L, "datasize get %s", errbuf);
-	}
-
-	bind[i].data = calloc(bind[i].max_len+1, sizeof(char));
-	rc = OCIDefineByPos(statement->stmt, &bind[i].define, statement->conn->err, (ub4)i+1, bind[i].data, bind[i].max_len, SQLT_STR, (dvoid *)&(bind[i].null), (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT);
-	if (rc) {
-	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4)sizeof(errbuf), OCI_HTYPE_ERROR);
-	    luaL_error(L, "define by pos %s", errbuf);
-	}
-    }
 
     status = OCIStmtFetch(statement->stmt, statement->conn->err, 1, OCI_FETCH_NEXT, OCI_DEFAULT);
 
@@ -451,6 +496,7 @@ int dbd_oracle_statement_create(lua_State *L, connection_t *conn, const char *sq
     statement->stmt = stmt;
     statement->num_columns = 0;
     statement->bind = NULL;
+    statement->metadata = 0;
 
     luaL_getmetatable(L, DBD_ORACLE_STATEMENT);
     lua_setmetatable(L, -2);
