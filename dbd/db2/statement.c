@@ -447,6 +447,17 @@ static int statement_gc(lua_State *L) {
     return 0;
 }
 
+/*
+ * __tostring
+ */
+static int statement_tostring(lua_State *L) {
+    statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_DB2_STATEMENT);
+
+    lua_pushfstring(L, "%s: %p", DBD_DB2_STATEMENT, statement);
+
+    return 1;
+}
+
 int dbd_db2_statement_create(lua_State *L, connection_t *conn, const char *sql_query) { 
     SQLRETURN rc = SQL_SUCCESS;
     statement_t *statement = NULL;
@@ -518,6 +529,9 @@ int dbd_db2_statement(lua_State *L) {
 
     lua_pushcfunction(L, statement_gc);
     lua_setfield(L, -2, "__gc");
+
+    lua_pushcfunction(L, statement_tostring);
+    lua_setfield(L, -2, "__tostring");
 
     luaL_register(L, DBD_DB2_STATEMENT, statement_class_methods);
 

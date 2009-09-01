@@ -198,6 +198,17 @@ static int connection_gc(lua_State *L) {
     return 0;
 }
 
+/*
+ * __tostring
+ */
+static int connection_tostring(lua_State *L) {
+    connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_SQLITE_CONNECTION);
+
+    lua_pushfstring(L, "%s: %p", DBD_SQLITE_CONNECTION, conn);
+
+    return 1;
+}
+
 int dbd_sqlite3_connection(lua_State *L) {
     /*
      * instance methods
@@ -228,6 +239,9 @@ int dbd_sqlite3_connection(lua_State *L) {
 
     lua_pushcfunction(L, connection_gc);
     lua_setfield(L, -2, "__gc");
+
+    lua_pushcfunction(L, connection_tostring);
+    lua_setfield(L, -2, "__tostring");
 
     luaL_register(L, DBD_SQLITE_CONNECTION, connection_class_methods);
 
