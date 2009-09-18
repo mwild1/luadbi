@@ -17,7 +17,8 @@ database drivers. To build the drivers for DB2 and Oracle, run `make all`.
 
 == Windows ==
 
-LuaDBI has not been built or tested on Windows.
+Inside the vc++ directory are build projects for Visual C++ to build LuaDBI
+for Windows.
 
 = Make Targets =
 
@@ -32,5 +33,5 @@ LuaDBI has not been built or tested on Windows.
 = Installation =
 
 Please consult your distributions documentation on installing Lua modules.
-Please note that both the database binary driver packages (*.so) and DBI.lua
+Please note that both the database binary driver packages (*.so|*.dll) and DBI.lua
 must be installed correctly to use LuaDBI
