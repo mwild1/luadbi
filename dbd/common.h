@@ -10,12 +10,22 @@
 #include <compat-5.1.h>
 #endif
 
+#ifdef _WIN32
+    #define LUA_EXPORT __declspec(dllexport)
+#else
+    #define LUA_EXPORT
+#endif
+
+#ifdef _MSC_VER  /* all MS compilers define this (version) */
+     #define snprintf _snprintf
+#endif
+
 /*
  *
  * Table construction helper functions
  *
  * LUA_PUSH_ATTRIB_* creates string indexed (hashmap)
- * LUA_PUSH_ATTRIB_* creates integer indexed (array)
+ * LUA_PUSH_ARRAY_* creates integer indexed (array)
  *
  */
 

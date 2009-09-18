@@ -83,11 +83,6 @@ static int statement_columns(lua_State *L) {
     int i;
     int d;
 
-    SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
-    SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
-    SQLINTEGER sqlcode;
-    SQLSMALLINT length;
-
     SQLRETURN rc = SQL_SUCCESS;
  
     if (!statement->resultset || !statement->bind) {

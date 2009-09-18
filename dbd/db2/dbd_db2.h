@@ -1,3 +1,5 @@
+#undef UNICODE
+
 #include <sqlcli1.h>
 #include <sqlutil.h>
 #include <sqlenv.h>

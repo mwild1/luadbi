@@ -1,3 +1,8 @@
+#ifdef _MSC_VER  /* all MS compilers define this (version) */
+	#include <windows.h> 
+#endif
+
+
 #include <mysql.h>
 #include <dbd/common.h>
 

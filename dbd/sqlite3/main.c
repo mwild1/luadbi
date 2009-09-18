@@ -6,7 +6,7 @@ int dbd_sqlite3_statement(lua_State *L);
 /* 
  * library entry point
  */
-int luaopen_dbdsqlite3(lua_State *L) {
+LUA_EXPORT int luaopen_dbdsqlite3(lua_State *L) {
     dbd_sqlite3_connection(L);
     dbd_sqlite3_statement(L); 
 

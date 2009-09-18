@@ -1,5 +1,12 @@
 #include "dbd_postgresql.h"
 
+#define BOOLOID                 16
+#define INT2OID                 21
+#define INT4OID                 23
+#define INT8OID                 20
+#define FLOAT4OID		700
+#define FLOAT8OID		701
+
 static lua_push_type_t postgresql_to_lua_push(unsigned int postgresql_type) {
     lua_push_type_t lua_type;
 
@@ -28,11 +35,11 @@ static lua_push_type_t postgresql_to_lua_push(unsigned int postgresql_type) {
 
 static int deallocate(statement_t *statement) {
     char command[IDLEN+11];
+	PGresult *result;
+	ExecStatusType status;
 
-    snprintf(command, IDLEN+11, "DEALLOCATE %s", statement->name);    
-
-    PGresult *result = PQexec(statement->postgresql, command);
-    ExecStatusType status;
+	snprintf(command, IDLEN+11, "DEALLOCATE %s", statement->name);    
+    result = PQexec(statement->postgresql, command);
 
     if (!result)
         return 1;

@@ -123,7 +123,7 @@ static int statement_execute(lua_State *L) {
 
     /*
      * reset the handle before binding params
-     * this wil be a NOP if the handle has not
+     * this will be a NOP if the handle has not
      * been executed
      */
     if (sqlite3_reset(statement->stmt) != SQLITE_OK) {

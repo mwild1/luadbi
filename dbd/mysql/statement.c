@@ -9,6 +9,7 @@ static lua_push_type_t mysql_to_lua_push(unsigned int mysql_type) {
 	break;
 
     case MYSQL_TYPE_TINY:
+    case MYSQL_TYPE_YEAR:
     case MYSQL_TYPE_SHORT:
     case MYSQL_TYPE_LONG:	
 	lua_type =  LUA_PUSH_INTEGER;
@@ -25,6 +26,46 @@ static lua_push_type_t mysql_to_lua_push(unsigned int mysql_type) {
 
     return lua_type;
 } 
+
+static size_t mysql_buffer_size(MYSQL_FIELD *field) {
+    unsigned int mysql_type = field->type;
+    size_t size = 0;
+    
+    switch (mysql_type) {
+	case MYSQL_TYPE_TINY:
+	    size = 4;
+	    break;
+	case MYSQL_TYPE_YEAR:
+	case MYSQL_TYPE_SHORT:
+	    size = 4;
+	    break;
+	case MYSQL_TYPE_INT24:
+	    size = 4;
+	    break;
+	case MYSQL_TYPE_LONG:
+	    size = 4;
+	    break;
+	case MYSQL_TYPE_LONGLONG:
+	    size = 8;
+	    break;
+	case MYSQL_TYPE_FLOAT:
+	    size = 4;
+	    break;
+	case MYSQL_TYPE_DOUBLE:
+	    size = 8;
+	    break;
+	case MYSQL_TYPE_TIME:
+	case MYSQL_TYPE_DATE:
+	case MYSQL_TYPE_DATETIME:
+	case MYSQL_TYPE_TIMESTAMP:
+	    size = sizeof(MYSQL_TIME);	
+	    break;
+	default:
+	    size = field->length;
+    }
+
+    return size;
+}
 
 /*
  * num_affected_rows = statement:affected()
@@ -263,8 +304,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 	fields = mysql_fetch_fields(statement->metadata);
 
 	for (i = 0; i < column_count; i++) {
-	    unsigned int length = fields[i].length;
-
+	    unsigned int length = mysql_buffer_size(&fields[i]);
 	    char *buffer = (char *)malloc(length);
 	    memset(buffer, 0, length);
 
@@ -305,10 +345,47 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 			LUA_PUSH_ARRAY_FLOAT(d, *(double *)(bind[i].buffer));
 		    }
 		} else if (lua_push == LUA_PUSH_STRING) {
-		    if (named_columns) {
-			LUA_PUSH_ATTRIB_STRING(name, bind[i].buffer);
+
+		    if (fields[i].type == MYSQL_TYPE_TIMESTAMP || fields[i].type == MYSQL_TYPE_DATETIME) {
+			char str[20];
+			struct st_mysql_time *t = bind[i].buffer;
+
+			snprintf(str, 20, "%d-%02d-%02d %02d:%02d:%02d", t->year, t->month, t->day, t->hour, t->minute, t->second);
+
+			if (named_columns) {
+			    LUA_PUSH_ATTRIB_STRING(name, str);
+			} else {
+			    LUA_PUSH_ARRAY_STRING(d, str);
+			}
+		    } else if (fields[i].type == MYSQL_TYPE_TIME) {
+			char str[9];
+			struct st_mysql_time *t = bind[i].buffer;
+
+			snprintf(str, 9, "%02d:%02d:%02d", t->hour, t->minute, t->second);
+
+			if (named_columns) {
+			    LUA_PUSH_ATTRIB_STRING(name, str);
+			} else {
+			    LUA_PUSH_ARRAY_STRING(d, str);
+			}
+		    } else if (fields[i].type == MYSQL_TYPE_DATE) {
+			char str[20];
+			struct st_mysql_time *t = bind[i].buffer;
+
+			snprintf(str, 11, "%d-%02d-%02d", t->year, t->month, t->day);
+
+			if (named_columns) {
+			    LUA_PUSH_ATTRIB_STRING(name, str);
+			} else {
+			    LUA_PUSH_ARRAY_STRING(d, str);
+			}
+
 		    } else {
-			LUA_PUSH_ARRAY_STRING(d, bind[i].buffer);
+			if (named_columns) {
+			    LUA_PUSH_ATTRIB_STRING(name, bind[i].buffer);
+			} else {
+			    LUA_PUSH_ARRAY_STRING(d, bind[i].buffer);
+			}
 		    }
 		} else if (lua_push == LUA_PUSH_BOOLEAN) {
 		    if (named_columns) {
@@ -436,6 +513,10 @@ int dbd_mysql_statement_create(lua_State *L, connection_t *conn, const char *sql
     statement->mysql = conn->mysql;
     statement->stmt = stmt;
     statement->metadata = NULL;
+
+    /*
+    mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, (my_bool*)0);
+    */
 
     luaL_getmetatable(L, DBD_MYSQL_STATEMENT);
     lua_setmetatable(L, -2);
