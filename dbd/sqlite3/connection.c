@@ -9,7 +9,6 @@ static int run(connection_t *conn, const char *command) {
 }
 
 static int commit(connection_t *conn) {
-    conn->txn_in_progress = 0;
     return run(conn, "COMMIT TRANSACTION");
 }
 
@@ -17,18 +16,16 @@ static int commit(connection_t *conn) {
 static int begin(connection_t *conn) {
     int err = 0;
 
-    if (conn->txn_in_progress) {
-        err = 0;
-    } else {
-        conn->txn_in_progress = 1;
+    if (sqlite3_get_autocommit(conn->sqlite)) {
         err = run(conn, "BEGIN TRANSACTION");
+    } else {
+        err = 0;
     }
 
     return err;
 }
 
 static int rollback(connection_t *conn) {
-    conn->txn_in_progress = 0;
     return run(conn, "ROLLBACK TRANSACTION");
 }
 
@@ -67,7 +64,6 @@ static int connection_new(lua_State *L) {
     }
 
     conn->autocommit = 0;
-    conn->txn_in_progress = 0;
 
     luaL_getmetatable(L, DBD_SQLITE_CONNECTION);
     lua_setmetatable(L, -2);
