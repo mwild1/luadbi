@@ -87,10 +87,6 @@ static int connection_autocommit(lua_State *L) {
 	if (on) {
 	    err = rollback(conn);
         }
-        /*
-	else
-	    err = begin(conn);
-        */
 
 	conn->autocommit = on;	
     }
@@ -193,13 +189,6 @@ static int connection_rollback(lua_State *L) {
 
     if (conn->sqlite) {
 	err =rollback(conn);
-
-        /*
-	if (!conn->autocommit)
-	    err = begin(conn);
-	else
-	    err = 1;
-        */
     }
 
     lua_pushboolean(L, !err);
