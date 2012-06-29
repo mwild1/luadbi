@@ -346,12 +346,10 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 		const char *name = fields[i].name;
 
 		if (bind[i].buffer == NULL) {
-		    char *buffer = (char *)malloc(real_length[i]);
-		    memset(buffer, 0, real_length[i]);
-
+		    char *buffer = (char *)calloc(real_length[i]+1, sizeof(char));
 		    bind[i].buffer = buffer;
 		    bind[i].buffer_length = real_length[i];
-		    mysql_stmt_fetch_column(statement->stmt, bind, i, 0);
+		    mysql_stmt_fetch_column(statement->stmt, &bind[i], i, 0);
 		}
 
 		if (lua_push == LUA_PUSH_NIL) {
