@@ -334,9 +334,9 @@ static int statement_rows(lua_State *L) {
  * num_rows = statement:rowcount()
  */
 static int statement_rowcount(lua_State *L) {
-    luaL_error(L, DBI_ERR_NOT_IMPLEMENTED, DBD_SQLITE_STATEMENT, "rowcount");
-
-    return 0;
+	statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_SQLITE_STATEMENT);
+	lua_pushinteger(L, sqlite3_data_count(statement->stmt));
+	return 1;
 }
 
 /*
