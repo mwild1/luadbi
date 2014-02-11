@@ -22,6 +22,10 @@ typedef struct _connection {
 typedef struct _statement {
     MYSQL *mysql;
     MYSQL_STMT *stmt;
-    MYSQL_RES *metadata; /* result dataset metadata */
+    MYSQL_RES *metadata;	/* result dataset metadata */
+    
+    unsigned long *lengths;	/* length of retrieved data 
+							we have to keep this from bind time to 
+							result retrival time */
 } statement_t;
 
