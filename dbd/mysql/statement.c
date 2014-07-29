@@ -440,9 +440,9 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 
 		    } else {
 			if (named_columns) {
-			    LUA_PUSH_ATTRIB_STRING(name, bind[i].buffer);
+			    LUA_PUSH_ATTRIB_STRING_BY_LENGTH(name, bind[i].buffer, *bind[i].length);
 			} else {
-			    LUA_PUSH_ARRAY_STRING(d, bind[i].buffer);
+			    LUA_PUSH_ARRAY_STRING_BY_LENGTH(d, bind[i].buffer, *bind[i].length);
 			}
 		    }
 		} else if (lua_push == LUA_PUSH_BOOLEAN) {

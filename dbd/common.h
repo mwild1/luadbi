@@ -39,6 +39,11 @@
     lua_pushnumber(L, v); \
     lua_rawset(L, -3); 
 
+#define LUA_PUSH_ATTRIB_STRING_BY_LENGTH(n, v, len) \
+    lua_pushstring(L, n); \
+    lua_pushlstring(L, v, len); \
+    lua_rawset(L, -3); 
+
 #define LUA_PUSH_ATTRIB_STRING(n, v) \
     lua_pushstring(L, n); \
     lua_pushstring(L, v); \
@@ -68,6 +73,11 @@
 
 #define LUA_PUSH_ARRAY_STRING(n, v) \
     lua_pushstring(L, v); \
+    lua_rawseti(L, -2, n); \
+    n++;
+
+#define LUA_PUSH_ARRAY_STRING_BY_LENGTH(n, v, len) \
+    lua_pushlstring(L, v, len); \
     lua_rawseti(L, -2, n); \
     n++;
 
