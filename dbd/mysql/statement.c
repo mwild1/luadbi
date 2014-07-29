@@ -394,12 +394,18 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 					LUA_PUSH_ATTRIB_FLOAT(name, *(float *)(bind[i].buffer));
 				} else {
 					LUA_PUSH_ARRAY_FLOAT(d, *(float *)(bind[i].buffer));
-				}	
-			} else {
+				}
+			} else if (fields[i].type == MYSQL_TYPE_DOUBLE) {
 				if (named_columns) {
 					LUA_PUSH_ATTRIB_FLOAT(name, *(double *)(bind[i].buffer));
 				} else {
 					LUA_PUSH_ARRAY_FLOAT(d, *(double *)(bind[i].buffer));
+				}
+			} else {
+				if (named_columns) {
+					LUA_PUSH_ATTRIB_FLOAT(name, *(long long *)(bind[i].buffer));
+				} else {
+					LUA_PUSH_ARRAY_FLOAT(d, *(long long *)(bind[i].buffer));
 				}
 			}
 		} else if (lua_push == LUA_PUSH_STRING) {
