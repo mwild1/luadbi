@@ -11,6 +11,7 @@ static lua_push_type_t mysql_to_lua_push(unsigned int mysql_type) {
     case MYSQL_TYPE_TINY:
     case MYSQL_TYPE_YEAR:
     case MYSQL_TYPE_SHORT:
+    case MYSQL_TYPE_INT24:
     case MYSQL_TYPE_LONG:
 	lua_type =  LUA_PUSH_INTEGER;
 	break;
