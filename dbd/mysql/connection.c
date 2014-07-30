@@ -16,7 +16,7 @@ static int connection_new(lua_State *L) {
     const char *db = NULL;
     int port = 0;
 
-    const char *unix_socket = NULL; /* TODO always NULL */
+    const char *unix_socket = NULL;
     int client_flag = 0; /* TODO always 0, set flags from options table */
 
     /* db, user, password, host, port */
@@ -27,6 +27,10 @@ static int connection_new(lua_State *L) {
     case 4: 
 	if (lua_isnil(L, 4) == 0) 
 	    host = luaL_checkstring(L, 4);
+	if (host[0] == '/') {
+		unix_socket = host;
+		host = NULL;
+	};
     case 3:
 	if (lua_isnil(L, 3) == 0) 
 	    password = luaL_checkstring(L, 3);
