@@ -52,9 +52,12 @@ char *replace_placeholders(lua_State *L, char native_prefix, const char *sql) {
     /*
      * allocate a new string for the converted SQL statement
      */
-    newsql = malloc(sizeof(char) * (len+extra_space+1));
-    memset(newsql, 0, sizeof(char) * (len+extra_space+1));
-    
+    newsql = calloc(len+extra_space+1, sizeof(char));
+    if(!newsql) {
+    	lua_pushliteral(L, "out of memory");
+    	return lua_error(L);
+    }
+
     /* 
      * copy first char. In valid SQL this cannot be a placeholder
      */
