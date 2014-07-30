@@ -161,10 +161,13 @@ static int statement_execute(lua_State *L) {
 	case LUA_TNUMBER:
 	    errflag = sqlite3_bind_double(statement->stmt, i, lua_tonumber(L, p)) != SQLITE_OK;
 	    break;
-	case LUA_TSTRING:
-	    errflag = sqlite3_bind_text(statement->stmt, i, lua_tostring(L, p), -1, SQLITE_STATIC) != SQLITE_OK;
+	case LUA_TSTRING: {
+	    size_t len = -1;
+	    const char *str = lua_tolstring(L, p, &len);
+	    errflag = sqlite3_bind_text(statement->stmt, i, str, len, SQLITE_STATIC) != SQLITE_OK;
 	    break;
-	case LUA_TBOOLEAN:
+	}
+    case LUA_TBOOLEAN:
 	    errflag = sqlite3_bind_int(statement->stmt, i, lua_toboolean(L, p)) != SQLITE_OK;
 	    break;
 	default:
