@@ -7,8 +7,8 @@ int dbd_mysql_statement(lua_State *L);
  * libabry entry point
  */
 LUA_EXPORT int luaopen_dbdmysql(lua_State *L) {
-    dbd_mysql_connection(L);
     dbd_mysql_statement(L);
+    dbd_mysql_connection(L);
 
     return 1;
 }

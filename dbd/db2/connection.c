@@ -259,7 +259,11 @@ int dbd_db2_connection(lua_State *L) {
     };
 
     luaL_newmetatable(L, DBD_DB2_CONNECTION);
+#if LUA_VERSION_NUM < 502
+    luaL_register(L, 0, connection_methods);
+#else
     luaL_setfuncs(L, connection_methods, 0);
+#endif
     lua_pushvalue(L,-1);
     lua_setfield(L, -2, "__index");
 
@@ -269,9 +273,11 @@ int dbd_db2_connection(lua_State *L) {
     lua_pushcfunction(L, connection_tostring);
     lua_setfield(L, -2, "__tostring");
 
-    lua_newtable(L);
-    luaL_setfuncs(L, connection_class_methods, 0);
-    lua_setglobal(L, DBD_DB2_CONNECTION);
+#if LUA_VERSION_NUM < 502
+     luaL_register(L, DBD_DB2_CONNECTION, connection_class_methods);
+#else
+    luaL_newlib(L, connection_class_methods);
+#endif
 
     return 1;    
 }

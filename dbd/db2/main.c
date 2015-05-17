@@ -7,8 +7,8 @@ int dbd_db2_statement(lua_State *L);
  * library entry point
  */
 LUA_EXPORT int luaopen_dbddb2(lua_State *L) {
-    dbd_db2_connection(L);
     dbd_db2_statement(L); 
+    dbd_db2_connection(L);
 
     return 1;
 }

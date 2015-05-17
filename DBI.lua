@@ -1,6 +1,6 @@
 #!/usr/bin/lua
 
-module('DBI', package.seeall)
+local _M = {}
 
 -- Driver to module mapping
 local name_to_module = {
@@ -36,7 +36,7 @@ end
 
  -- High level DB connection function
  -- This should be used rather than DBD.{Driver}.New
-function Connect(driver, ...)
+function _M.Connect(driver, ...)
     local modulefile = name_to_module[driver]
 
     if not modulefile then
@@ -52,10 +52,13 @@ function Connect(driver, ...)
 	error(string.format('Cannot load driver %s. Available drivers are: %s', driver, available))
     end
 
-    local class_str = string.format('DBD.%s.Connection', driver)
+    local class_str = modulefile
+    if tonumber(string.sub(_VERSION, -3)) < 5.2 then
+        class_str = string.format('DBD.%s.Connection', driver)
+    end
 
     -- load class from name in globals table
-    local connection_class = _G[class_str]
+    local connection_class = package.loaded[class_str]
 
     -- Calls DBD.{Driver}.New(...)
     return connection_class.New(...)
@@ -63,7 +66,7 @@ end
 
 -- Help function to do prepare and execute in 
 -- a single step
-function Do(dbh, sql, ...)
+function _M.Do(dbh, sql, ...)
     local sth,err = dbh:prepare(sql)
 
     if not sth then
@@ -79,7 +82,9 @@ function Do(dbh, sql, ...)
     return sth:affected()
 end
 
--- Lit drivers available on this system
-function Drivers()
+-- List drivers available on this system
+function _M.Drivers()
     return available_drivers() 
 end
+
+return _M
