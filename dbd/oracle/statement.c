@@ -532,7 +532,7 @@ int dbd_oracle_statement(lua_State *L) {
     };
 
     luaL_newmetatable(L, DBD_ORACLE_STATEMENT);
-    luaL_register(L, 0, statement_methods);
+    luaL_setfuncs(L, statement_methods, 0);
     lua_pushvalue(L,-1);
     lua_setfield(L, -2, "__index");
 
@@ -542,7 +542,9 @@ int dbd_oracle_statement(lua_State *L) {
     lua_pushcfunction(L, statement_tostring);
     lua_setfield(L, -2, "__tostring");
 
-    luaL_register(L, DBD_ORACLE_STATEMENT, statement_class_methods);
+    lua_newtable(L);
+    luaL_setfuncs(L, statement_class_methods, 0);
+    lua_setglobal(L, DBD_ORACLE_STATEMENT);
 
     return 1;    
 }

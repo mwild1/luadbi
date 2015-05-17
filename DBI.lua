@@ -54,7 +54,8 @@ function Connect(driver, ...)
 
     local class_str = string.format('DBD.%s.Connection', driver)
 
-    local connection_class = package.loaded[class_str]
+    -- load class from name in globals table
+    local connection_class = _G[class_str]
 
     -- Calls DBD.{Driver}.New(...)
     return connection_class.New(...)

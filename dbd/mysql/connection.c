@@ -231,7 +231,7 @@ int dbd_mysql_connection(lua_State *L) {
     };
 
     luaL_newmetatable(L, DBD_MYSQL_CONNECTION);
-    luaL_register(L, 0, connection_methods);
+    luaL_setfuncs(L, connection_methods, 0);
     lua_pushvalue(L,-1);
     lua_setfield(L, -2, "__index");
 
@@ -241,7 +241,9 @@ int dbd_mysql_connection(lua_State *L) {
     lua_pushcfunction(L, connection_tostring);
     lua_setfield(L, -2, "__tostring");
 
-    luaL_register(L, DBD_MYSQL_CONNECTION, connection_class_methods);
+    lua_newtable(L);
+    luaL_setfuncs(L, connection_class_methods, 0);
+    lua_setglobal(L, DBD_MYSQL_CONNECTION);
 
     return 1;    
 }
