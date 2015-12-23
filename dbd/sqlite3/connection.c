@@ -202,6 +202,16 @@ static int connection_lastid(lua_State *L) {
 }
 
 /*
+ * last_id = statement:last_id()
+ */
+static int connection_lastid(lua_State *L) {
+       connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_SQLITE_CONNECTION);
+
+       lua_pushinteger(L, sqlite3_last_insert_rowid( conn->sqlite ));
+       return 1;
+}
+
+/*
  * __gc 
  */
 static int connection_gc(lua_State *L) {
@@ -234,6 +244,7 @@ int dbd_sqlite3_connection(lua_State *L) {
 	{"prepare", connection_prepare},
 	{"quote", connection_quote},
 	{"rollback", connection_rollback},
+	{"last_id", connection_lastid},
 	{NULL, NULL}
     };
 
