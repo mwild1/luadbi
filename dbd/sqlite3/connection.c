@@ -202,16 +202,6 @@ static int connection_lastid(lua_State *L) {
 }
 
 /*
- * last_id = statement:last_id()
- */
-static int connection_lastid(lua_State *L) {
-       connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_SQLITE_CONNECTION);
-
-       lua_pushinteger(L, sqlite3_last_insert_rowid( conn->sqlite ));
-       return 1;
-}
-
-/*
  * __gc 
  */
 static int connection_gc(lua_State *L) {
