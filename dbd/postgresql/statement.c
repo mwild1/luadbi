@@ -6,6 +6,7 @@
 #define INT8OID                 20
 #define FLOAT4OID		700
 #define FLOAT8OID		701
+#define DECIMALOID		1700
 
 static lua_push_type_t postgresql_to_lua_push(unsigned int postgresql_type) {
     lua_push_type_t lua_type;
@@ -19,6 +20,7 @@ static lua_push_type_t postgresql_to_lua_push(unsigned int postgresql_type) {
 
     case FLOAT4OID:
     case FLOAT8OID:
+    case DECIMALOID:
         lua_type = LUA_PUSH_NUMBER;
         break;
 
