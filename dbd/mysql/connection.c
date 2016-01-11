@@ -27,9 +27,11 @@ static int connection_new(lua_State *L) {
     case 4: 
 	if (lua_isnil(L, 4) == 0) 
 	    host = luaL_checkstring(L, 4);
-	if (host[0] == '/') {
-		unix_socket = host;
-		host = NULL;
+	if (host != NULL) {
+		if (host[0] == '/') {
+			unix_socket = host;
+			host = NULL;
+		};
 	};
     case 3:
 	if (lua_isnil(L, 3) == 0) 
