@@ -13,8 +13,16 @@ return {
 	
 	encoding_test = {
 		12435212,
+		463769,
+		8574678,
+		-12435212,
+		0,
+		9998212,
 		7653.25,
-		35.34,
+		7635236,
+		0.000,
+		-7653.25,
+		1636.94783,
 		"string 1",
 		"another_string",
 		"really long string with some escapable chars: #&*%#;@'"

@@ -105,6 +105,7 @@ local function test_encoding()
 		local row = sth:rows(true)()
 		assert.is_not_nil(row)
 		assert.is_equal(val, row['retval'])
+		assert.is_equal(type(val), type(row['retval']))
 	
 		sth:close()
 	
