@@ -30,6 +30,7 @@ return {
 	
 	placeholder = '?',
 	
+	have_last_insert_id = true,
 	have_typecasts = false,
 	have_booleans = false,
 	have_rowcount = true

@@ -250,6 +250,14 @@ static int connection_rollback(lua_State *L) {
 }
 
 /*
+ * last_id = connection:last_id()
+ */
+static int connection_lastid(lua_State *L) {
+    luaL_error(L, DBI_ERR_NOT_IMPLEMENTED, DBD_POSTGRESQL_CONNECTION, "last_id");
+    return 0;
+}
+
+/*
  * __gc
  */
 static int connection_gc(lua_State *L) {
@@ -279,6 +287,7 @@ int dbd_postgresql_connection(lua_State *L) {
 	{"prepare", connection_prepare},
 	{"quote", connection_quote},
 	{"rollback", connection_rollback},
+	{"last_id", connection_lastid},
 	{NULL, NULL}
     };
 

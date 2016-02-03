@@ -118,10 +118,11 @@ local function test_select()
 
 	local sth, err = dbh:prepare(code('select'))
 	local count = 0
+	local success
 	
 	assert.is_nil(err)
 	assert.is_not_nil(sth)
-	local success, err = sth:execute("Row 1")
+	success, err = sth:execute("Row 1")
 	
 	assert.is_true(success)
 	assert.is_nil(err)
@@ -273,6 +274,53 @@ end
 
 
 
+--
+-- Prove the nonexistant functions aren't there.
+--
+local function test_no_rowcount()
+
+	local sth, err = dbh:prepare(code('select'))
+	local success
+	
+	success, err = sth:execute("Row 1")
+	
+	assert.is_true(success)
+	assert.is_nil(err)
+	
+	assert.has_error(function()
+		local x = sth:rowcount()
+	end)
+	
+	sth:close()
+
+end
+
+
+--
+-- Prove there is no insert_id.
+--
+local function test_no_insert_id()
+
+	local sth, sth2, err, success, stringy
+	local stringy = os.date()
+
+
+	sth, err = dbh:prepare(code('insert'))
+	
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+	success, err = sth:execute(stringy)
+	
+	assert.has_error(function()
+		local x = dbh:insert_id()
+	end)
+	
+	sth:close()
+
+end
+
+
+
 describe("PostgreSQL", function()
 	db_type = "PostgreSQL"
 	config = dofile("configs/" .. db_type .. ".lua")
@@ -285,6 +333,7 @@ describe("PostgreSQL", function()
 	it( "Tests a simple select", test_select )
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert_returning )
+	it( "Tests no insert_id", test_no_insert_id )
 	teardown(teardown)
 end)
 
@@ -299,6 +348,7 @@ describe("SQLite3", function()
 	it( "Tests simple selects", test_select )
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert )
+	it( "Tests no rowcount", test_no_rowcount )
 	teardown(teardown)
 end)
 

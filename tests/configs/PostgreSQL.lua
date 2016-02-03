@@ -36,6 +36,7 @@ return {
 	
 	placeholder = '$1',
 	
+	have_last_insert_id = false,
 	have_typecasts = true,
 	have_booleans = true,
 	have_rowcount = true

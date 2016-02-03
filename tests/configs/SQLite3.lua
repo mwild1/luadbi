@@ -29,6 +29,7 @@ return {
 	
 	placeholder = '$1',
 	
+	have_last_insert_id = true,
 	have_typecasts = true,
 	have_booleans = false,
 	have_rowcount = false
