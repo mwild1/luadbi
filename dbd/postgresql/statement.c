@@ -400,10 +400,10 @@ int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char
     status = PQresultStatus(result);
     if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK) {
         const char *err_string = PQresultErrorMessage(result);
-        PQclear(result);
 
         lua_pushnil(L);
         lua_pushfstring(L, DBI_ERR_PREP_STATEMENT, err_string);
+        PQclear(result);
         return 2;
     }
 
