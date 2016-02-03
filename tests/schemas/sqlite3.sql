@@ -47,3 +47,39 @@ create table insert_tests
 		val varchar(255) not null
 	);
 	
+drop table if exists update_tests;
+create table update_tests
+	(
+		id integer primary key,
+		name varchar(255) not null,
+		last_update int not null,
+		flag bool not null
+	);
+	
+insert into update_tests
+	( 
+		name, 
+		last_update,
+		flag
+	)
+	values
+	(
+		'Row 1',
+		'now',
+		1
+	),
+	(
+		'Row 2',
+		'now',
+		1
+	),
+	(
+		'Row 3',
+		'now',
+		0
+	),
+	(
+		'Row 4',
+		'now',
+		1
+	);

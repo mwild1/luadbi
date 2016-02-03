@@ -50,3 +50,42 @@ create table insert_tests
 	);
 	
 grant insert, select on insert_tests to 'luadbi'@'%';
+
+drop table if exists update_tests;
+create table update_tests
+	(
+		id int not null primary key auto_increment,
+		name varchar(255) not null,
+		last_update int not null,
+		flag bool not null
+	);
+	
+insert into update_tests
+	( 
+		name, 
+		last_update,
+		flag
+	)
+	values
+	(
+		'Row 1',
+		NOW(),
+		1
+	),
+	(
+		'Row 2',
+		NOW(),
+		1
+	),
+	(
+		'Row 3',
+		NOW(),
+		0
+	),
+	(
+		'Row 4',
+		NOW(),
+		1
+	);
+
+grant select, update on update_tests to 'luadbi'@'%';

@@ -14,7 +14,9 @@ local sql_code = {
 	['select_multi'] = "select * from select_tests where flag = %s;",
 	['insert'] = "insert into insert_tests ( val ) values ( %s );",
 	['insert_returning'] = "insert into insert_tests ( val ) values ( %s ) returning id;",
-	['insert_select'] = "select * from insert_tests where id = %s;"
+	['insert_select'] = "select * from insert_tests where id = %s;",
+	['update_all'] = "update update_tests set last_update = %s;",
+	['update_some'] = "update update_tests set last_update = %s where flag = %s;"
 	
 }
 
@@ -273,6 +275,50 @@ local function test_insert_returning()
 end
 
 
+--
+-- Prove affected() is functional.
+--
+local function test_update()
+
+	--
+	-- I originally used date handling and set the column
+	-- to NOW(), but Sqlite3 didn't play nice with that.
+	--
+
+	local sth, err = dbh:prepare(code('update_all'))
+	local success
+	
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+	
+	success, err = sth:execute(os.time() - math.random(50, 500))
+	assert.is_nil(err)
+	assert.is_true(success)
+	assert.equals(4, sth:affected())
+	sth:close()
+	sth = nil
+	
+	-- do it again with the flag set, so we get fewer rows,
+	-- just to be sure.
+	-- which also means we need to sleep for a bit.
+	
+	if config.have_booleans then
+		sth, err = dbh:prepare(code('update_some', 'false'))
+	else
+		sth, err = dbh:prepare(code('update_some', '0'))
+	end
+		
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+	
+	success, err = sth:execute(os.time())
+	assert.is_nil(err)
+	assert.is_true(success)
+	assert.equals(1, sth:affected())
+	
+end
+
+
 
 --
 -- Prove the nonexistant functions aren't there.
@@ -334,6 +380,7 @@ describe("PostgreSQL", function()
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert_returning )
 	it( "Tests no insert_id", test_no_insert_id )
+	it( "Tests affected rows", test_update )
 	teardown(teardown)
 end)
 
@@ -349,6 +396,7 @@ describe("SQLite3", function()
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert )
 	it( "Tests no rowcount", test_no_rowcount )
+	it( "Tests affected rows", test_update )
 	teardown(teardown)
 end)
 
@@ -364,5 +412,6 @@ describe("MySQL", function()
 	it( "Tests simple selects", test_select )
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert )
+	it( "Tests affected rows", test_update )
 	teardown(teardown)
 end)
