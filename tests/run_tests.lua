@@ -203,6 +203,7 @@ local function test_insert()
 	
 	assert.is_nil(err)
 	assert.is_not_nil(sth)
+	
 	success, err = sth:execute(stringy)
 	
 	assert.is_true(success)
@@ -222,34 +223,77 @@ local function test_insert()
 	
 	assert.is_nil(err)
 	assert.is_not_nil(sth)
+	
 	success, err = sth2:execute(id)
+	
+	assert.is_true(success)
+	assert.is_nil(err)
 	
 	local row = sth2:rows(false)()
 	assert.is_not_nil(row)
 	assert.are_equal(id, row[1])
 	assert.are_equal(stringy, row[2])
 
+	sth:close()
+	sth2:close()
+
 end
 
 
 local function test_insert_multi()
 
-	local sth, sth2, err, success, stringy
+	local sth, sth2, err, stringy, rs, count, success
 	local stringy = os.date()
 
 	sth, err = dbh:prepare(code('insert'))
-
 	assert.is_nil(err)
 	assert.is_not_nil(sth)
 
+	sth2, err = dbh:prepare(sql_code['select_count'])
+	assert.is_nil(err)
+	assert.is_not_nil(sth2)
+		
+	--
+	-- See how many rows are in the table
+	--
+	rs, err = sth2:execute()
+	assert.is_nil(err)
+	assert.is_not_nil(rs)
+	
+	local itr = sth2:rows(false)
+	count = itr()[1]
+	
+	-- drain the results - should only be one row but let's be correct
+	while itr() do success = nil end
+	
+	--
+	-- Reuse the insert statement quite a few times
+	--
 	for i=1,10 do 
 		success, err = sth:execute(stringy .. '-' .. tostring(i))
 		
+		assert.is_true(success)
 		assert.is_nil(err)
 		assert.is_not_nil(sth)
 
 		assert.is_equal(1, sth:affected())
 	end
+
+
+	--
+	-- Make sure all ten inserts succeed by comparing how many
+	-- rows are there now. Also proves selects are reusable.
+	--
+	rs, err = sth2:execute()
+	assert.is_nil(err)
+	assert.is_not_nil(rs)
+	
+	itr = sth2:rows(false)
+	assert.is_equal(count + 10, itr()[1])
+	while itr() do success = nil end
+	
+	sth:close()
+	sth2:close()
 
 end
 
