@@ -12,6 +12,7 @@ local sql_code = {
 	['encoding'] = "select %s%s as retval;",
 	['select'] = "select * from select_tests where name = %s;",
 	['select_multi'] = "select * from select_tests where flag = %s;",
+	['select_count'] = "select count(*) as total from insert_tests;",
 	['insert'] = "insert into insert_tests ( val ) values ( %s );",
 	['insert_returning'] = "insert into insert_tests ( val ) values ( %s ) returning id;",
 	['insert_select'] = "select * from insert_tests where id = %s;",
@@ -207,9 +208,7 @@ local function test_insert()
 	assert.is_true(success)
 	assert.is_nil(err)
 	
-	if config.has_rowcount then
-		assert.is_equal(1, sth:rowcount())
-	end
+	assert.is_equal(1, sth:affected())
 	
 	--
 	-- Grab it back, make sure it's all good
@@ -229,6 +228,28 @@ local function test_insert()
 	assert.is_not_nil(row)
 	assert.are_equal(id, row[1])
 	assert.are_equal(stringy, row[2])
+
+end
+
+
+local function test_insert_multi()
+
+	local sth, sth2, err, success, stringy
+	local stringy = os.date()
+
+	sth, err = dbh:prepare(code('insert'))
+
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+
+	for i=1,10 do 
+		success, err = sth:execute(stringy .. '-' .. tostring(i))
+		
+		assert.is_nil(err)
+		assert.is_not_nil(sth)
+
+		assert.is_equal(1, sth:affected())
+	end
 
 end
 
@@ -379,6 +400,7 @@ describe("PostgreSQL", function()
 	it( "Tests a simple select", test_select )
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert_returning )
+	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests no insert_id", test_no_insert_id )
 	it( "Tests affected rows", test_update )
 	teardown(teardown)
@@ -395,6 +417,7 @@ describe("SQLite3", function()
 	it( "Tests simple selects", test_select )
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert )
+	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests no rowcount", test_no_rowcount )
 	it( "Tests affected rows", test_update )
 	teardown(teardown)
@@ -412,6 +435,7 @@ describe("MySQL", function()
 	it( "Tests simple selects", test_select )
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert )
+	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests affected rows", test_update )
 	teardown(teardown)
 end)
