@@ -124,6 +124,16 @@ static int statement_execute(lua_State *L) {
 	return 2;
     }
 
+
+    /*
+     * sanity check: make sure our database handle is still open
+     */
+    if (!statement->conn->sqlite) {
+	lua_pushstring(L, "Statement object invalid: Connection closed");
+	lua_error(L);
+    }
+
+
     /*
      * reset the handle before binding params
      * this will be a NOP if the handle has not
