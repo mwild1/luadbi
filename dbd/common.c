@@ -55,7 +55,8 @@ char *replace_placeholders(lua_State *L, char native_prefix, const char *sql) {
     newsql = calloc(len+extra_space+1, sizeof(char));
     if(!newsql) {
     	lua_pushliteral(L, "out of memory");
-    	return lua_error(L);
+	/* lua_error does not return. */
+    	lua_error(L);
     }
 
     /* 
