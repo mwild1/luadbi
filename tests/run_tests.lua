@@ -58,8 +58,10 @@ end
 
 local function teardown_tests()
 
-	dbh:close()
-	dbh = nil
+	if dbh then
+		dbh:close()
+		dbh = nil
+	end
 
 end
 
@@ -431,8 +433,30 @@ local function test_no_insert_id()
 end
 
 
+--
+-- Prove something sane happens in the event that the database
+-- handle goes away, but statements are still open.
+--
+local function test_db_close_doesnt_segfault()
 
-describe("PostgreSQL", function()
+
+	local sth, err
+	sth = dbh:prepare("SELECT 1");
+	
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+
+	dbh:close()
+	dbh = nil
+	assert.has_error(function()
+		sth:execute()
+	end)
+
+end
+
+
+
+describe("PostgreSQL #psql", function()
 	db_type = "PostgreSQL"
 	config = dofile("configs/" .. db_type .. ".lua")
 	local DBI,	dbh
@@ -447,10 +471,11 @@ describe("PostgreSQL", function()
 	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests no insert_id", test_no_insert_id )
 	it( "Tests affected rows", test_update )
+	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
 	teardown(teardown)
 end)
 
-describe("SQLite3", function()
+describe("SQLite3 #sqlite3", function()
 	db_type = "SQLite3"
 	config = dofile("configs/" .. db_type .. ".lua")
 	local DBI, dbh
@@ -464,10 +489,11 @@ describe("SQLite3", function()
 	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests no rowcount", test_no_rowcount )
 	it( "Tests affected rows", test_update )
+	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
 	teardown(teardown)
 end)
 
-describe("MySQL", function()
+describe("MySQL #mysql", function()
 	db_type = "MySQL"
 	config = dofile("configs/" .. db_type .. ".lua")
 	local DBI, dbh
@@ -481,5 +507,6 @@ describe("MySQL", function()
 	it( "Tests inserts", test_insert )
 	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests affected rows", test_update )
+	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
 	teardown(teardown)
 end)
