@@ -129,7 +129,7 @@ static int statement_execute(lua_State *L) {
      * sanity check: make sure our database handle is still open
      */
     if (!statement->conn->sqlite) {
-	lua_pushstring(L, "Statement object invalid: Connection closed");
+	lua_pushstring(L, DBI_ERR_STATEMENT_BROKEN);
 	lua_error(L);
     }
 

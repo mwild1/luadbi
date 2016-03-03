@@ -142,6 +142,7 @@ typedef enum lua_push_type {
 #define DBI_ERR_INVALID_STATEMENT   "Invalid statement handle"
 #define DBI_ERR_NOT_IMPLEMENTED     "Method %s.%s is not implemented"
 #define DBI_ERR_QUOTING_STR         "Error quoting string: %s"
+#define DBI_ERR_STATEMENT_BROKEN    "Statement unavailable: database closed"
 
 /*
  * convert string to lower case
