@@ -451,6 +451,9 @@ local function test_db_close_doesnt_segfault()
 	assert.has_error(function()
 		sth:execute()
 	end)
+	
+	-- this also shouldn't segfault.
+	sth:close()
 
 end
 

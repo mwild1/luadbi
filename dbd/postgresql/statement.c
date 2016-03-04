@@ -40,17 +40,24 @@ static int deallocate(statement_t *statement) {
 	PGresult *result;
 	ExecStatusType status;
 
-	snprintf(command, IDLEN+13, "DEALLOCATE \"%s\"", statement->name);    
-    result = PQexec(statement->postgresql, command);
+	/*
+	 * It's possible to get here with a closed database handle
+	 * - either by a mistake by the calling Lua program, or by
+	 * garbage collection. Don't die in that case.
+	 */
+	if (!statement->postgresql) {
+		snprintf(command, IDLEN+13, "DEALLOCATE \"%s\"", statement->name);    
+    	result = PQexec(statement->postgresql, command);
 
-    if (!result)
-        return 1;
+    	if (!result)
+	        return 1;
 
-    status = PQresultStatus(result);
-    PQclear(result);
+	    status = PQresultStatus(result);
+	    PQclear(result);
 
-    if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK)
-        return 1;
+    	if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK)
+        	return 1;
+    }
 
     return 0;
 }
@@ -84,8 +91,8 @@ static int statement_close(lua_State *L) {
          */ 
         deallocate(statement); 
 
-	PQclear(statement->result);
-	statement->result = NULL;
+		PQclear(statement->result);
+		statement->result = NULL;
     }
 
     return 0;    
