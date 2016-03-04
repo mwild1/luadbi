@@ -131,6 +131,17 @@ static int statement_execute(lua_State *L) {
     const char **params;
     PGresult *result = NULL;
 
+
+	/*
+	 * Sanity check - is database still connected?
+	 */
+	if (PQstatus(statement->postgresql) != CONNECTION_OK)
+		{
+		lua_pushstring(L, DBI_ERR_STATEMENT_BROKEN);
+		lua_error(L);	
+		}
+
+
     statement->tuple = 0;
 
     params = malloc(num_bind_params * sizeof(params));
