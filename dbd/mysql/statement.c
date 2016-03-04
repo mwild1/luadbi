@@ -158,6 +158,17 @@ static int statement_execute(lua_State *L) {
 
     int p;
 
+
+	/*
+	 * Sanity check(s)
+	 */
+	if ((statement->mysql == NULL) || mysql_ping(statement->mysql) != 0)
+		{
+		lua_pushstring(L, DBI_ERR_STATEMENT_BROKEN);
+		lua_error(L);			
+		}
+
+
     if (statement->metadata) {
 	/*
 	 * free existing metadata from any previous executions
