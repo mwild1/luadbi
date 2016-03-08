@@ -440,14 +440,21 @@ end
 local function test_db_close_doesnt_segfault()
 
 
-	local sth, err
+	local sth, sth2, err
 	sth = dbh:prepare("SELECT 1");
 	
 	assert.is_nil(err)
 	assert.is_not_nil(sth)
 
 	dbh:close()
+	sth2, err = dbh:prepare(code('insert'))
+	
+	assert.is_nil(sth2)
+	assert.is_string(err)
+	
+	
 	dbh = nil
+	
 	assert.has_error(function()
 		sth:execute()
 	end)
