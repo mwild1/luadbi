@@ -23,7 +23,7 @@ typedef struct _connection {
  * statement object implementation
  */
 typedef struct _statement {
-    PGconn *postgresql;
+    connection_t *conn;
     PGresult *result;
     char name[IDLEN]; /* statement ID */
     int tuple; /* number of rows returned */

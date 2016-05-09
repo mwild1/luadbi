@@ -45,9 +45,9 @@ static int deallocate(statement_t *statement) {
 	 * - either by a mistake by the calling Lua program, or by
 	 * garbage collection. Don't die in that case.
 	 */
-	if (!statement->postgresql) {
+	if (!statement->conn->postgresql) {
 		snprintf(command, IDLEN+13, "DEALLOCATE \"%s\"", statement->name);    
-    	result = PQexec(statement->postgresql, command);
+    	result = PQexec(statement->conn->postgresql, command);
 
     	if (!result)
 	        return 1;
@@ -142,7 +142,7 @@ static int statement_execute(lua_State *L) {
 	/*
 	 * Sanity check - is database still connected?
 	 */
-	if (PQstatus(statement->postgresql) != CONNECTION_OK)
+	if (PQstatus(statement->conn->postgresql) != CONNECTION_OK)
 		{
 		lua_pushstring(L, DBI_ERR_STATEMENT_BROKEN);
 		lua_error(L);	
@@ -188,7 +188,7 @@ static int statement_execute(lua_State *L) {
     }
 
     result = PQexecPrepared(
-        statement->postgresql,
+        statement->conn->postgresql,
         statement->name,
         num_bind_params,
         (const char **)params,
@@ -208,7 +208,7 @@ cleanup:
 
     if (!result) {
         lua_pushboolean(L, 0);
-        lua_pushfstring(L, DBI_ERR_ALLOC_RESULT,  PQerrorMessage(statement->postgresql));
+        lua_pushfstring(L, DBI_ERR_ALLOC_RESULT,  PQerrorMessage(statement->conn->postgresql));
         return 2;
     }
     
@@ -411,7 +411,7 @@ int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char
 
     if (!result) {
         lua_pushnil(L);
-        lua_pushfstring(L, DBI_ERR_ALLOC_STATEMENT, PQerrorMessage(statement->postgresql));
+        lua_pushfstring(L, DBI_ERR_ALLOC_STATEMENT, PQerrorMessage(statement->conn->postgresql));
         return 2;
     }
     
@@ -428,7 +428,7 @@ int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char
     PQclear(result);
 
     statement = (statement_t *)lua_newuserdata(L, sizeof(statement_t));
-    statement->postgresql = conn->postgresql;
+    statement->conn = conn;
     statement->result = NULL;
     statement->tuple = 0;
     strncpy(statement->name, name, IDLEN-1);

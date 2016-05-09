@@ -20,7 +20,6 @@ typedef struct _connection {
  * statement object implementation
  */
 typedef struct _statement {
-    /*MYSQL *mysql;*/
     connection_t *conn;
     MYSQL_STMT *stmt;
     MYSQL_RES *metadata;	/* result dataset metadata */
