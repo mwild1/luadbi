@@ -162,7 +162,7 @@ static int statement_execute(lua_State *L) {
 	/*
 	 * Sanity check(s)
 	 */
-	if ((statement->mysql == NULL) || mysql_ping(statement->mysql) != 0)
+	if (statement->conn->mysql == NULL)
 		{
 		lua_pushstring(L, DBI_ERR_STATEMENT_BROKEN);
 		lua_error(L);			
@@ -587,7 +587,7 @@ int dbd_mysql_statement_create(lua_State *L, connection_t *conn, const char *sql
     }
 
     statement = (statement_t *)lua_newuserdata(L, sizeof(statement_t));
-    statement->mysql = conn->mysql;
+    statement->conn = conn;
     statement->stmt = stmt;
     statement->metadata = NULL;
     statement->lengths = NULL;
