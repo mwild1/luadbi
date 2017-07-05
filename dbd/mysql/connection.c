@@ -23,7 +23,7 @@ static int connection_new(lua_State *L) {
     switch (n) {
     case 5:
 	if (lua_isnil(L, 5) == 0) 
-	    port = luaL_checkint(L, 5);
+	    port = luaL_checkinteger(L, 5);
     case 4: 
 	if (lua_isnil(L, 4) == 0) 
 	    host = luaL_checkstring(L, 4);

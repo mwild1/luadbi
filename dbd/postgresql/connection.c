@@ -56,7 +56,7 @@ static int connection_new(lua_State *L) {
     case 5:
 	if (lua_isnil(L, 5) == 0) 
 	{
-	    int pport = luaL_checkint(L, 5);
+	    int pport = luaL_checkinteger(L, 5);
 
 	    if (pport >= 1 && pport <= 65535) {
 		snprintf(portbuf, sizeof(portbuf), "%d", pport);
