@@ -69,22 +69,22 @@ insert into update_tests
 	values
 	(
 		'Row 1',
-		NOW(),
+		UNIX_TIMESTAMP(NOW()),
 		1
 	),
 	(
 		'Row 2',
-		NOW(),
+		UNIX_TIMESTAMP(NOW()),
 		1
 	),
 	(
 		'Row 3',
-		NOW(),
+		UNIX_TIMESTAMP(NOW()),
 		0
 	),
 	(
 		'Row 4',
-		NOW(),
+		UNIX_TIMESTAMP(NOW()),
 		1
 	);
 
