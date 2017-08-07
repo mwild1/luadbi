@@ -618,27 +618,9 @@ int dbd_mysql_statement(lua_State *L) {
 	{NULL, NULL}
     };
 
-    luaL_newmetatable(L, DBD_MYSQL_STATEMENT);
-#if LUA_VERSION_NUM < 502
-    luaL_register(L, 0, statement_methods);
-#else
-    luaL_setfuncs(L, statement_methods, 0);
-#endif
-    lua_pushvalue(L,-1);
-    lua_setfield(L, -2, "__index");
-
-    lua_pushcfunction(L, statement_gc);
-    lua_setfield(L, -2, "__gc");
-
-    lua_pushcfunction(L, statement_tostring);
-    lua_setfield(L, -2, "__tostring");
-
-#if LUA_VERSION_NUM < 502
-     luaL_register(L, DBD_MYSQL_STATEMENT, statement_class_methods);
-#else
-    luaL_newlib(L, statement_class_methods);
-#endif
-
+    dbd_register(L, DBD_MYSQL_STATEMENT,
+		 statement_methods, statement_class_methods,
+		 statement_gc, statement_tostring);
 
     return 1;    
 }

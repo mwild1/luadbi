@@ -101,3 +101,34 @@ char *replace_placeholders(lua_State *L, char native_prefix, const char *sql) {
     return newsql;
 }
 
+void dbd_register(lua_State *L, const char *name,
+		  const luaL_Reg *methods, const luaL_Reg *class_methods,
+		  lua_CFunction gc, lua_CFunction tostring)
+{
+    /* Create a new metatable with the given name and then assign the methods
+     * to it.  Set the __index, __gc and __tostring fields appropriately.
+     */
+    luaL_newmetatable(L, name);
+#if LUA_VERSION_NUM < 502
+    luaL_register(L, 0, methods);
+#else
+    luaL_setfuncs(L, methods, 0);
+#endif
+    lua_pushvalue(L, -1);
+    lua_setfield(L, -2, "__index");
+
+    lua_pushcfunction(L, gc);
+    lua_setfield(L, -2, "__gc");
+
+    lua_pushcfunction(L, tostring);
+    lua_setfield(L, -2, "__tostring");
+
+    /* Create a new table and register the class methods with it */
+    lua_newtable(L);
+#if LUA_VERSION_NUM < 502
+    luaL_register(L, 0, class_methods);
+#else
+    luaL_setfuncs(L, class_methods, 0);
+#endif
+}
+
