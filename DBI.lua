@@ -9,6 +9,7 @@ local name_to_module = {
     SQLite3 = 'dbdsqlite3',
     DB2 = 'dbddb2',
     Oracle = 'dbdoracle',
+    ODBC = 'dbdodbc'
 }
 
 local string = require('string')
@@ -52,16 +53,7 @@ function _M.Connect(driver, ...)
 	error(string.format('Cannot load driver %s. Available drivers are: %s', driver, available))
     end
 
-    local class_str = modulefile
-    if tonumber(string.sub(_VERSION, -3)) < 5.2 then
-        class_str = string.format('DBD.%s.Connection', driver)
-    end
-
-    -- load class from name in globals table
-    local connection_class = package.loaded[class_str]
-
-    -- Calls DBD.{Driver}.New(...)
-    return connection_class.New(...)
+    return package.loaded[modulefile].New(...)
 end
 
 -- Help function to do prepare and execute in 
