@@ -1,4 +1,5 @@
 #include "dbd_db2.h"
+#include "db2_common.h"
 
 int dbd_db2_statement_create(lua_State *L, connection_t *conn, const char *sql_query);
 
@@ -32,9 +33,6 @@ static int connection_new(lua_State *L) {
     const char *db = NULL;
 
     SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
-    SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
-    SQLINTEGER sqlcode;
-    SQLSMALLINT length;
 
     /* db, user, password */
     switch(n) {
@@ -90,7 +88,7 @@ static int connection_new(lua_State *L) {
     /* connect to the database */
     rc = SQLConnect(conn->db2, (SQLCHAR *)db, SQL_NTS, (SQLCHAR *)user, SQL_NTS, (SQLCHAR *)password, SQL_NTS);
     if (rc != SQL_SUCCESS) {
-	SQLGetDiagRec(SQL_HANDLE_DBC, conn->db2, 1, sqlstate, &sqlcode, message, SQL_MAX_MESSAGE_LENGTH + 1, &length);
+	db2_dbc_diag(conn->db2, message, sizeof(message));
 
 	lua_pushnil(L);
 	lua_pushfstring(L, DBI_ERR_CONNECTION_FAILED, message);
@@ -129,23 +127,22 @@ static int connection_autocommit(lua_State *L) {
 static int connection_close(lua_State *L) {
     connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_DB2_CONNECTION);
     int disconnect = 0;   
-    SQLRETURN rc = SQL_SUCCESS;
 
     if (conn->db2) {
 	rollback(conn);
 
 	/* disconnect from the database */
-	rc = SQLDisconnect(conn->db2);
+	(void)SQLDisconnect(conn->db2);
 
 	/* free connection handle */
-	rc = SQLFreeHandle(SQL_HANDLE_DBC, conn->db2);
+	(void)SQLFreeHandle(SQL_HANDLE_DBC, conn->db2);
 
 	conn->db2 = 0;
     }
 
     if (conn->env) {
 	/* free environment handle */
-	rc = SQLFreeHandle(SQL_HANDLE_ENV, conn->env);
+	(void)SQLFreeHandle(SQL_HANDLE_ENV, conn->env);
     }
 
     lua_pushboolean(L, disconnect);

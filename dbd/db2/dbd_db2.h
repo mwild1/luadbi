@@ -12,22 +12,23 @@
  * result set metadata
  */
 
+typedef union _resultset_data {
+    SQLCHAR *str;
+    lua_Number number;
+    lua_Integer integer;
+    int boolean;
+} resultset_data_t;
+
 typedef struct _resultset {
     SQLSMALLINT name_len;
     SQLSMALLINT type;
     SQLUINTEGER size;
     SQLSMALLINT scale;
+    SQLINTEGER actual_len;
+    lua_push_type_t lua_type;
+    resultset_data_t data;
     SQLCHAR name[32];
 } resultset_t;
-
-/*
- * bind parameters
- */
-typedef struct _bindparams { 
-    SQLCHAR *buffer;
-    SQLINTEGER len;
-    SQLINTEGER buffer_len;
-} bindparams_t;
 
 /*
  * connection object implentation
@@ -42,11 +43,13 @@ typedef struct _connection {
  */
 typedef struct _statement {
     resultset_t * resultset;
-    bindparams_t * bind;
     unsigned char *buffer;
     SQLSMALLINT num_result_columns; /* variable for SQLNumResultCols */
 
     SQLHANDLE stmt;
     SQLHANDLE db2;
+    int cursor_open;
+    SQLSMALLINT num_params;
+    unsigned char *parambuf;
 } statement_t;
 
