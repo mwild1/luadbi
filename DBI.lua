@@ -20,11 +20,11 @@ local function available_drivers()
     local available = {}
 
     for driver, modulefile in pairs(name_to_module) do
-	local m, err = pcall(require, modulefile)
+		local m, err = pcall(require, modulefile)
 
-	if m then
-	    table.insert(available, driver)
-	end
+		if m then
+			table.insert(available, driver)
+		end
     end
 
     -- no drivers available
@@ -42,15 +42,15 @@ function _M.Connect(driver, ...)
 
     if not modulefile then
         local available = table.concat(available_drivers(), ',')
-	error(string.format("Driver '%s' not found. Available drivers are: %s", driver, available))
+		error(string.format("Driver '%s' not found. Available drivers are: %s", driver, available))
     end
 
     local m, err = pcall(require, modulefile)
 
     if not m then
-	-- cannot load the module, we cannot continue
+		-- cannot load the module, we cannot continue
         local available = table.concat(available_drivers(), ',')
-	error(string.format('Cannot load driver %s. Available drivers are: %s', driver, available))
+		error(string.format('Cannot load driver %s. Available drivers are: %s', driver, available))
     end
 
     return package.loaded[modulefile].New(...)
@@ -62,7 +62,7 @@ function _M.Do(dbh, sql, ...)
     local sth,err = dbh:prepare(sql)
 
     if not sth then
-	return false, err
+		return false, err
     end
 
     local ok, err = sth:execute(...)
