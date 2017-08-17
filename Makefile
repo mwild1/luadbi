@@ -10,7 +10,7 @@ LUA_V		?= 5.1
 LUA_LDIR	?= /usr/share/lua/$(LUA_V)
 LUA_CDIR	?= /usr/lib/lua/$(LUA_V)
 
-COMMON_CFLAGS	 = -g -pedantic -Wall -O2 -shared -fPIC -DPIC -std=c99
+COMMON_CFLAGS	 ?= -g -pedantic -Wall -O2 -shared -fPIC -DPIC -std=c99
 LUA_INC		?= -I/usr/include/lua$(LUA_V)
 MYSQL_INC	?= -I/usr/include/mysql
 PSQL_INC	?= -I/usr/include/postgresql
@@ -19,7 +19,7 @@ DB2_INC		?= -I/opt/ibm/db2exc/V9.5/include
 ORACLE_INC	?= -I/usr/lib/oracle/xe/app/oracle/product/10.2.0/client/rdbms/public
 CF		 = $(LUA_INC) $(COMMON_CFLAGS) $(CFLAGS) -I.
 
-COMMON_LDFLAGS	 = -shared
+COMMON_LDFLAGS	 ?= -shared
 MYSQL_LDFLAGS	?= -lmysqlclient
 PSQL_LDFLAGS	?= -lpq
 SQLITE3_LDFLAGS	?= -lsqlite3
