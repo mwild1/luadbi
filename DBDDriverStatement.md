@@ -80,8 +80,13 @@ otherwise numeric indexing based on column order is used.
 ### num\_rows = statement:rowcount() ###
 
 Returns the number of rows retrieved after the execution of a 
-`select` operation. **Please note** this method is not currently 
-implemented in every database driver.
+`select` operation. 
+
+This function is not available in all drivers. Currently implemented
+in:
+
+ - PostgreSQL
+ - MySQL
 
 ### iterator = statement:rows(named\_columns) ###
 

@@ -67,3 +67,17 @@ parameters for your data.
 ### success = connection:rollback() ###
 
 Rolls back all database activity since the last `commit` or `rollback`.
+
+### id = connection:last_id() ###
+
+Returns the primary key of the most recent row inserted into a table
+with an autoincrementing key, for this connection.
+
+Not available on all drivers. Currently implemented on:
+
+ - MySQL
+ - Sqlite3
+
+It is unlikely to be implemented on other databases, largely because
+other databases don't have this feature. Check 'insert returning'
+syntax (or similar) instead.
