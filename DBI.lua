@@ -4,12 +4,12 @@ local _M = {}
 
 -- Driver to module mapping
 local name_to_module = {
-    MySQL = 'dbdmysql',
-    PostgreSQL = 'dbdpostgresql',
-    SQLite3 = 'dbdsqlite3',
-    DB2 = 'dbddb2',
-    Oracle = 'dbdoracle',
-    ODBC = 'dbdodbc'
+    MySQL = 'dbd.mysql',
+    PostgreSQL = 'dbd.postgresql',
+    SQLite3 = 'dbd.sqlite3',
+    DB2 = 'dbd.db2',
+    Oracle = 'dbd.oracle',
+    ODBC = 'dbd.odbc'
 }
 
 local string = require('string')
