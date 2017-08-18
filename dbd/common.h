@@ -147,13 +147,13 @@ typedef enum lua_push_type {
 /*
  * convert string to lower case
  */
-const char *strlower(char *in);
+const char *dbd_strlower(char *in);
 
 /*
  * replace '?' placeholders with .\d+ placeholders
  * to be compatible with the native driver API
  */
-char *replace_placeholders(lua_State *L, char native_prefix, const char *sql);
+char *dbd_replace_placeholders(lua_State *L, char native_prefix, const char *sql);
 
 void dbd_register(lua_State *L, const char *name,
 		  const luaL_Reg *methods, const luaL_Reg *class_methods,

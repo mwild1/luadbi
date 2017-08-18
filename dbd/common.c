@@ -1,6 +1,6 @@
 #include <dbd/common.h>
 
-const char *strlower(char *in) {
+const char *dbd_strlower(char *in) {
     char *s = in;
 
     while(*s) {
@@ -15,7 +15,7 @@ const char *strlower(char *in) {
  * replace '?' placeholders with {native_prefix}\d+ placeholders
  * to be compatible with native API
  */
-char *replace_placeholders(lua_State *L, char native_prefix, const char *sql) {
+char *dbd_replace_placeholders(lua_State *L, char native_prefix, const char *sql) {
     size_t len = strlen(sql);
     int num_placeholders = 0;
     int extra_space = 0;

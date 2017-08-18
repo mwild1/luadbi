@@ -100,7 +100,7 @@ static int statement_columns(lua_State *L) {
     d = 1; 
     lua_newtable(L);
     for (i = 0; i < statement->num_result_columns; i++) {
-	const char *name = strlower((char *)statement->resultset[i].name);
+	const char *name = dbd_strlower((char *)statement->resultset[i].name);
 	LUA_PUSH_ARRAY_STRING(d, name);
     }
 

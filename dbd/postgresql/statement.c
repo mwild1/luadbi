@@ -398,7 +398,7 @@ int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char
     /*
      * convert SQL string into a PSQL API compatible SQL statement
      */ 
-    new_sql = replace_placeholders(L, '$', sql_query);
+    new_sql = dbd_replace_placeholders(L, '$', sql_query);
 
     snprintf(name, IDLEN, "dbd-postgresql-%017u", ++conn->statement_id);
 

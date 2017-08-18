@@ -157,7 +157,7 @@ static int statement_columns(lua_State *L) {
 
     lua_newtable(L);
     for (i = 0; i < statement->num_columns; i++) {
-	const char *name = strlower(statement->bind[i].name);
+	const char *name = dbd_strlower(statement->bind[i].name);
 
 	LUA_PUSH_ARRAY_STRING(d, name);
     }
@@ -370,7 +370,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 
 	for (i = 0; i < statement->num_columns; i++) {
 	    lua_push_type_t lua_push = oracle_to_lua_push(bind[i].data_type, bind[i].null);
-	    const char *name = strlower(bind[i].name);
+	    const char *name = dbd_strlower(bind[i].name);
 	    const char *data = bind[i].data;
 
 	    if (lua_push == LUA_PUSH_NIL) {
@@ -495,7 +495,7 @@ int dbd_oracle_statement_create(lua_State *L, connection_t *conn, const char *sq
     /*
      * convert SQL string into a Oracle API compatible SQL statement
      */
-    new_sql = replace_placeholders(L, ':', sql_query);
+    new_sql = dbd_replace_placeholders(L, ':', sql_query);
 
     rc = OCIHandleAlloc((dvoid *)conn->oracle, (dvoid **)&stmt, OCI_HTYPE_STMT, 0, (dvoid **)0);
     rc = OCIStmtPrepare(stmt, conn->err, new_sql, strlen(new_sql), (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DEFAULT);
