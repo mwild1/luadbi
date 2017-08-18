@@ -36,11 +36,11 @@ ORACLE_FLAGS	 = $(CF) $(LF) $(ORACLE_INC) $(ORACLE_LDFLAGS)
 
 BUILDDIR	 = build
 
-DBDMYSQL	 = dbdmysql.so
-DBDPSQL		 = dbdpostgresql.so
-DBDSQLITE3	 = dbdsqlite3.so
-DBDDB2		 = dbddb2.so
-DBDORACLE	 = dbdoracle.so
+DBDMYSQL	 = dbd/mysql.so
+DBDPSQL		 = dbd/postgresql.so
+DBDSQLITE3	 = dbd/sqlite3.so
+DBDDB2		 = dbd/db2.so
+DBDORACLE	 = dbd/oracle.so
 
 OBJS		 = build/dbd_common.o
 MYSQL_OBJS	 = $(OBJS) build/dbd_mysql_main.o build/dbd_mysql_connection.o build/dbd_mysql_statement.o
