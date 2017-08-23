@@ -79,4 +79,8 @@ function _M.Drivers()
     return available_drivers() 
 end
 
+
+-- Versioning Information
+_M._VERSION = '0.6'
+
 return _M
