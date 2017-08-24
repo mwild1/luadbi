@@ -28,8 +28,8 @@ local function available_drivers()
     end
 
     -- no drivers available
-    if table.maxn(available) < 1 then
-	available = {'(None)'}
+    if #available < 1 then
+		available = {'(None)'}
     end
 
     return available
@@ -81,6 +81,6 @@ end
 
 
 -- Versioning Information
-_M._VERSION = '0.6'
+_M._VERSION = '0.6.1'
 
 return _M
