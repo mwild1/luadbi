@@ -65,20 +65,25 @@ static int connection_new(lua_State *L) {
 		luaL_error(L, DBI_ERR_INVALID_PORT, pport);
 	    }
 	}
+    // fallthrough
     case 4: 
 	if (lua_isnil(L, 4) == 0) 
 	    host = luaL_checkstring(L, 4);
+    // fallthrough
     case 3:
 	if (lua_isnil(L, 3) == 0) 
 	    password = luaL_checkstring(L, 3);
+    // fallthrough
     case 2:
 	if (lua_isnil(L, 2) == 0) 
 	    user = luaL_checkstring(L, 2);
+    // fallthrough
     case 1:
 	/*
 	 * db is the only mandatory parameter
 	 */
 	db = luaL_checkstring(L, 1);
+    // fallthrough
     }
 
     conn = (connection_t *)lua_newuserdata(L, sizeof(connection_t));
