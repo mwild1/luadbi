@@ -19,7 +19,7 @@ char *dbd_replace_placeholders(lua_State *L, char native_prefix, const char *sql
     size_t len = strlen(sql);
     int num_placeholders = 0;
     int extra_space = 0;
-    int i;
+    size_t i;
     char *newsql;
     int newpos = 1;
     int ph_num = 1;
