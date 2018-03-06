@@ -411,7 +411,7 @@ int dbd_postgresql_statement_create(lua_State *L, connection_t *conn, const char
 
     if (!result) {
         lua_pushnil(L);
-        lua_pushfstring(L, DBI_ERR_ALLOC_STATEMENT, PQerrorMessage(statement->conn->postgresql));
+        lua_pushfstring(L, DBI_ERR_ALLOC_STATEMENT, PQerrorMessage(conn->postgresql));
         return 2;
     }
     
