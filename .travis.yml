@@ -1,0 +1,16 @@
+language: c
+sudo: true
+
+env:
+  - LUA="5.1"
+  - LUA="5.2"
+
+install:
+  - sudo .travis/install.sh
+
+script:
+  - LUA_V=$LUA make free
+
+branches:
+  only:
+    - master
