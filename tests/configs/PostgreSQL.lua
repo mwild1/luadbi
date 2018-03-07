@@ -2,14 +2,14 @@
 
 
 return {
-		
+
 	connect = {
 		host = 'localhost',
 		name = 'luadbi',
 		user = 'luadbi',
 		pass = 'testinguser-12345!!!'
 	},
-	
+
 	encoding_test = {
 		['::int'] = 12435212,
 		['::int'] = 463769,
@@ -33,13 +33,13 @@ return {
 		['::varchar'] = "another_string",
 		['::text'] = "really long string with some escapable chars: #&*%#;@'"
 	},
-	
+
 	placeholder = '$1',
-	
+
 	have_last_insert_id = false,
 	have_typecasts = true,
 	have_booleans = true,
 	have_rowcount = true
-		
+
 }
 
