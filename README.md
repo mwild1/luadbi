@@ -8,5 +8,7 @@ databases with native database drivers.
 
 This version supports Lua 5.1, 5.2, and 5.3.
 
+[![Build Status](https://travis-ci.org/mwild1/luadbi.svg?branch=master)](https://travis-ci.org/mwild1/luadbi)
+
 Documentation is in the 'wiki' branch. You may also 
 [browse it online](https://zadzmo.org/code/luadbi/wiki)
