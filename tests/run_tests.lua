@@ -33,7 +33,7 @@ end
 
 
 local function setup_tests()
-
+	local err
 	DBI = require "DBI"
 	assert.is_not_nil(DBI)
 
@@ -94,6 +94,7 @@ end
 
 
 local function test_encoding()
+	local query
 
 	for vtype, val in pairs(config.encoding_test) do
 
@@ -160,10 +161,11 @@ local function test_select_multi()
 
 	local sth, err = dbh:prepare(code('select_multi'))
 	local count = 0
+	local success
 
 	assert.is_nil(err)
 	assert.is_not_nil(sth)
-	local success, err = sth:execute(false)
+	success, err = sth:execute(false)
 
 	assert.is_true(success)
 	assert.is_nil(err)
@@ -197,7 +199,7 @@ end
 
 local function test_insert()
 
-	local sth, sth2, err, success, stringy
+	local sth, sth2, err, success
 	local stringy = os.date()
 
 
@@ -244,7 +246,7 @@ end
 
 local function test_insert_multi()
 
-	local sth, sth2, err, stringy, rs, count, success
+	local sth, sth2, err, rs, count, success
 	local stringy = os.date()
 
 	sth, err = dbh:prepare(code('insert'))
@@ -302,7 +304,7 @@ end
 
 local function test_insert_returning()
 
-	local sth, sth2, err, success, stringy
+	local sth, sth2, err, success
 	local stringy = os.date()
 
 
@@ -332,7 +334,7 @@ local function test_insert_returning()
 
 	assert.is_nil(err)
 	assert.is_not_nil(sth)
-	success, err = sth2:execute(id)
+	sth2:execute(id)
 
 	local row = sth2:rows(false)()
 	assert.is_not_nil(row)
@@ -363,7 +365,6 @@ local function test_update()
 	assert.is_true(success)
 	assert.equals(4, sth:affected())
 	sth:close()
-	sth = nil
 
 	-- do it again with the flag set, so we get fewer rows,
 	-- just to be sure.
@@ -392,16 +393,14 @@ end
 --
 local function test_no_rowcount()
 
-	local sth, err = dbh:prepare(code('select'))
-	local success
-
-	success, err = sth:execute("Row 1")
+	local sth, _ = dbh:prepare(code('select'))
+	local success, err = sth:execute("Row 1")
 
 	assert.is_true(success)
 	assert.is_nil(err)
 
 	assert.has_error(function()
-		local x = sth:rowcount()
+		sth:rowcount()
 	end)
 
 	sth:close()
@@ -414,18 +413,15 @@ end
 --
 local function test_no_insert_id()
 
-	local sth, sth2, err, success, stringy
 	local stringy = os.date()
-
-
-	sth, err = dbh:prepare(code('insert'))
+	local sth, err = dbh:prepare(code('insert'))
 
 	assert.is_nil(err)
 	assert.is_not_nil(sth)
-	success, err = sth:execute(stringy)
+	sth:execute(stringy)
 
 	assert.has_error(function()
-		local x = dbh:insert_id()
+		dbh:insert_id()
 	end)
 
 	sth:close()
@@ -439,19 +435,17 @@ end
 --
 local function test_db_close_doesnt_segfault()
 
-
-	local sth, sth2, err
-	sth = dbh:prepare("SELECT 1");
+	local sth,err = dbh:prepare("SELECT 1");
 
 	assert.is_nil(err)
 	assert.is_not_nil(sth)
 
 	dbh:close()
+	local sth2
 	sth2, err = dbh:prepare(code('insert'))
 
 	assert.is_nil(sth2)
 	assert.is_string(err)
-
 
 	dbh = nil
 
@@ -469,6 +463,7 @@ end
 describe("PostgreSQL #psql", function()
 	db_type = "PostgreSQL"
 	config = dofile("configs/" .. db_type .. ".lua")
+	-- luacheck: ignore DBI dbh
 	local DBI,	dbh
 
 	setup(setup_tests)
@@ -482,12 +477,13 @@ describe("PostgreSQL #psql", function()
 	it( "Tests no insert_id", test_no_insert_id )
 	it( "Tests affected rows", test_update )
 	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
-	teardown(teardown)
+	teardown(teardown_tests)
 end)
 
 describe("SQLite3 #sqlite3", function()
 	db_type = "SQLite3"
 	config = dofile("configs/" .. db_type .. ".lua")
+	-- luacheck: ignore DBI dbh
 	local DBI, dbh
 
 	setup(setup_tests)
@@ -500,12 +496,13 @@ describe("SQLite3 #sqlite3", function()
 	it( "Tests no rowcount", test_no_rowcount )
 	it( "Tests affected rows", test_update )
 	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
-	teardown(teardown)
+	teardown(teardown_tests)
 end)
 
 describe("MySQL #mysql", function()
 	db_type = "MySQL"
 	config = dofile("configs/" .. db_type .. ".lua")
+	-- luacheck: ignore DBI dbh
 	local DBI, dbh
 
 	setup(setup_tests)
@@ -518,5 +515,5 @@ describe("MySQL #mysql", function()
 	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests affected rows", test_update )
 	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
-	teardown(teardown)
+	teardown(teardown_tests)
 end)
