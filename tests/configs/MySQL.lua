@@ -4,7 +4,7 @@
 return {
 
 	connect = {
-		host = 'mysqlserver.zadzmo.org',
+		host = 'localhost',
 		port = 3306,
 		name = 'luadbi',
 		user = 'luadbi',

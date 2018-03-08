@@ -1,15 +1,45 @@
-language: c
+language: python
 sudo: true
+
+services:
+  - mysql
+  - postgresql
 
 env:
   - LUA="5.1"
   - LUA="5.2"
+  - LUA="5.3"
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libmysqlclient-dev libsqlite3-dev postgresql-server-dev-all
+  - sudo pip install hererocks
+  - hererocks ~/hererocks -r^ --lua $LUA
+  - export PATH=$PATH:~/hererocks/bin
+  - eval $(luarocks path --bin)
+  - luarocks install luacheck
+  - luarocks install busted
 
 install:
-  - sudo .travis/install.sh
+  - luarocks make luadbi-scm-0.rockspec
+  - luarocks make luadbi-mysql-scm-0.rockspec
+  - luarocks make luadbi-postgresql-scm-0.rockspec
+  - luarocks make luadbi-sqlite3-scm-0.rockspec
+
+before_script:
+  - mysql -u root -e 'CREATE DATABASE luadbi;'
+  - mysql -u root -e "CREATE USER 'luadbi'@'localhost' IDENTIFIED BY 'testing12345!!!';"
+  - mysql -u root -e "GRANT ALL ON luadbi.* TO 'luadbi'@'localhost';"
+  - mysql -u root luadbi < tests/schemas/mysql.sql
+  - psql -c "CREATE DATABASE luadbi;" -U postgres
+  - psql -c "CREATE USER luadbi WITH PASSWORD 'testinguser-12345!!!';" -U postgres
+  - psql luadbi < tests/schemas/postgresql.sql
+  - cat tests/schemas/sqlite3.sql | sqlite3 tests/sqlite3-test
 
 script:
-  - LUA_V=$LUA make free
+  - luacheck DBI.lua
+  - luacheck tests || true
+  - cd tests && busted run_tests.lua
 
 branches:
   only:

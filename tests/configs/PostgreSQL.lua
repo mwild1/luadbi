@@ -4,7 +4,7 @@
 return {
 		
 	connect = {
-		host = 'pgserver.zadzmo.org',
+		host = 'localhost',
 		name = 'luadbi',
 		user = 'luadbi',
 		pass = 'testinguser-12345!!!'
