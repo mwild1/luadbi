@@ -8,15 +8,15 @@ drop table if exists select_tests cascade;
 create table select_tests
 	(
 		id serial primary key,
-	
+
 		name varchar(255) not null,
 		flag boolean not null,
-		
+
 		maths int not null
-		
+
 	);
 
-insert into select_tests 
+insert into select_tests
 	(
 		name,
 		flag,
@@ -49,7 +49,7 @@ create table insert_tests
 		id serial primary key,
 		val varchar(255) not null
 	);
-	
+
 grant insert, select on insert_tests to luadbi;
 grant usage, select on insert_tests_id_seq to luadbi;
 
@@ -61,10 +61,10 @@ create table update_tests
 		last_update int not null,
 		flag bool not null
 	);
-	
+
 insert into update_tests
-	( 
-		name, 
+	(
+		name,
 		last_update,
 		flag
 	)

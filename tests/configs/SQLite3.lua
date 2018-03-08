@@ -2,11 +2,11 @@
 
 
 return {
-	
+
 	connect = {
 		name = 'sqlite3-test'
 	},
-	
+
 	encoding_test = {
 		['::int'] = 12435212,
 		['::int'] = 463769,
@@ -25,14 +25,14 @@ return {
 		['::varchar'] = "another_string",
 		['::text'] = "really long string with some escapable chars: #&*%#;@'"
 	},
-	
-	
+
+
 	placeholder = '$1',
-	
+
 	have_last_insert_id = true,
 	have_typecasts = true,
 	have_booleans = false,
 	have_rowcount = false
-	
+
 }
 

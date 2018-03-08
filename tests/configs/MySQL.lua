@@ -4,13 +4,13 @@
 return {
 
 	connect = {
-		host = 'mysqlserver.zadzmo.org',
+		host = 'localhost',
 		port = 3306,
 		name = 'luadbi',
 		user = 'luadbi',
 		pass = 'testing12345!!!'
 	},
-	
+
 	encoding_test = {
 		12435212,
 		463769,
@@ -27,13 +27,13 @@ return {
 		"another_string",
 		"really long string with some escapable chars: #&*%#;@'"
 	},
-	
+
 	placeholder = '?',
-	
+
 	have_last_insert_id = true,
 	have_typecasts = false,
 	have_booleans = false,
 	have_rowcount = true
-	
+
 }
 
