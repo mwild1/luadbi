@@ -84,6 +84,19 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
 	    luaL_error(L, "datasize get %s", errbuf);
 	}
 
+	/* TO_CHAR conversion wants one more byte than it actually reports? :/
+	 *  Try this:  local sth = assert(db:prepare("select to_char(sysdate, 'YYYYMMDD') FROM dual"))
+	 *             assert(sth:execute())
+	 * It reports max_len==8, but then 
+	 *
+         *   Fetch failed ORA-01406: fetched column value was truncated
+	 *
+	 * ... unless we add one more byte. This seems like a general
+	 * problem waiting to be more of a nuisance.
+         */
+
+	bind[i].max_len++;
+
 	bind[i].data = calloc(bind[i].max_len+1, sizeof(char));
 	rc = OCIDefineByPos(statement->stmt, &bind[i].define, statement->conn->err, (ub4)i+1, bind[i].data, bind[i].max_len, SQLT_STR, (dvoid *)&(bind[i].null), (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT);
 	if (rc) {
