@@ -167,12 +167,6 @@ int statement_close(lua_State *L) {
  */
 static int statement_columns(lua_State *L) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_ORACLE_STATEMENT);
-    int rc;
-
-    bindparams_t *bind;
-
-    char errbuf[100];
-    int errcode;
 
     int i;
     int d = 1;
@@ -364,9 +358,7 @@ int statement_execute(lua_State *L) {
  * must be called after an execute
  */
 static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_columns) {
-    int rc;
     sword status;
-    int i;
     bindparams_t *bind;
 
     char errbuf[100];
