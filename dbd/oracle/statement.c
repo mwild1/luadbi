@@ -39,6 +39,22 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
     if (statement->metadata)
 	return;
 
+    ub4 prefetch_mem = 1024*1024;
+    if (OCIAttrSet(statement->stmt, OCI_HTYPE_STMT, &prefetch_mem, sizeof(prefetch_mem),
+		   OCI_ATTR_PREFETCH_MEMORY, statement->conn->err) != OCI_SUCCESS) {
+      OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+      luaL_error(L, "prefetch_mem set %s", errbuf);
+    }
+
+    // FIXME: estimate this based on the prefetch mem size and our query's description
+    ub4 prefetch_rows = 1000000;
+    if (OCIAttrSet(statement->stmt, OCI_HTYPE_STMT,
+		   &prefetch_rows, sizeof(prefetch_rows), OCI_ATTR_PREFETCH_ROWS,
+		   statement->conn->err) != OCI_SUCCESS) {
+      OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+      luaL_error(L, "prefetch_rows set %s", errbuf);
+    }
+
     statement->bind = (bindparams_t *)malloc(sizeof(bindparams_t) * statement->num_columns);
     memset(statement->bind, 0, sizeof(bindparams_t) * statement->num_columns);
     bind = statement->bind;
