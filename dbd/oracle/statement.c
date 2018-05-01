@@ -39,6 +39,22 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
     if (statement->metadata)
 	return;
 
+    ub4 prefetch_mem = 1024*1024;
+    if (OCIAttrSet(statement->stmt, OCI_HTYPE_STMT, &prefetch_mem, sizeof(prefetch_mem),
+		   OCI_ATTR_PREFETCH_MEMORY, statement->conn->err) != OCI_SUCCESS) {
+      OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+      luaL_error(L, "prefetch_mem set %s", errbuf);
+    }
+
+    // FIXME: estimate this based on the prefetch mem size and our query's description
+    ub4 prefetch_rows = 1000000;
+    if (OCIAttrSet(statement->stmt, OCI_HTYPE_STMT,
+		   &prefetch_rows, sizeof(prefetch_rows), OCI_ATTR_PREFETCH_ROWS,
+		   statement->conn->err) != OCI_SUCCESS) {
+      OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+      luaL_error(L, "prefetch_rows set %s", errbuf);
+    }
+
     statement->bind = (bindparams_t *)malloc(sizeof(bindparams_t) * statement->num_columns);
     memset(statement->bind, 0, sizeof(bindparams_t) * statement->num_columns);
     bind = statement->bind;
@@ -67,6 +83,19 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
 	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
 	    luaL_error(L, "datasize get %s", errbuf);
 	}
+
+	/* TO_CHAR conversion wants one more byte than it actually reports? :/
+	 *  Try this:  local sth = assert(db:prepare("select to_char(sysdate, 'YYYYMMDD') FROM dual"))
+	 *             assert(sth:execute())
+	 * It reports max_len==8, but then 
+	 *
+         *   Fetch failed ORA-01406: fetched column value was truncated
+	 *
+	 * ... unless we add one more byte. This seems like a general
+	 * problem waiting to be more of a nuisance.
+         */
+
+	bind[i].max_len++;
 
 	bind[i].data = calloc(bind[i].max_len+1, sizeof(char));
 	rc = OCIDefineByPos(statement->stmt, &bind[i].define, statement->conn->err, (ub4)i+1, bind[i].data, bind[i].max_len, SQLT_STR, (dvoid *)&(bind[i].null), (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT);
@@ -138,12 +167,6 @@ int statement_close(lua_State *L) {
  */
 static int statement_columns(lua_State *L) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_ORACLE_STATEMENT);
-    int rc;
-
-    bindparams_t *bind;
-
-    char errbuf[100];
-    int errcode;
 
     int i;
     int d = 1;
@@ -335,9 +358,7 @@ int statement_execute(lua_State *L) {
  * must be called after an execute
  */
 static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_columns) {
-    int rc;
     sword status;
-    int i;
     bindparams_t *bind;
 
     char errbuf[100];

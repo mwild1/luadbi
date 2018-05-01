@@ -210,7 +210,7 @@ static int connection_rollback(lua_State *L) {
  * last_id = connection:last_id()
  */
 static int connection_lastid(lua_State *L) {
-    luaL_error(L, DBI_ERR_NOT_IMPLEMENTED, DBD_POSTGRESQL_CONNECTION, "last_id");
+    luaL_error(L, DBI_ERR_NOT_IMPLEMENTED, DBD_ORACLE_CONNECTION, "last_id");
     return 0;
 }
 
