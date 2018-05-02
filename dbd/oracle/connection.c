@@ -80,12 +80,18 @@ static int connection_new(lua_State *L) {
 	return 2;
     }
 
+    /* Get the remote database version */
+    text vbuf[256];
+    ub4 vnum;
+    rc = OCIServerRelease(svc, err, vbuf, sizeof(vbuf), OCI_HTYPE_SVCCTX, &vnum);
+    
     conn = (connection_t *)lua_newuserdata(L, sizeof(connection_t));
     conn->oracle = env;
     conn->err = err;
     conn->svc = svc;
     conn->autocommit = 0;
-
+    conn->vnum = vnum;
+    
     luaL_getmetatable(L, DBD_ORACLE_CONNECTION);
     lua_setmetatable(L, -2);
 
@@ -158,10 +164,31 @@ static int connection_commit(lua_State *L) {
  */
 static int connection_ping(lua_State *L) {
     connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_ORACLE_CONNECTION);
-    int ok = 0;   
+    int ok = 0;
 
     if (conn->oracle) {
-	ok = 1;
+      /* Not all Oracle client libraries have OCIPing, and it's pretty
+       * much impossible to tell which client version is installed
+       * programmatically. Rely on a compile-time decision by the
+       * operator. */
+        int rc;
+	if (
+#ifndef ORA_ENABLE_PING
+	     1 ||
+#endif
+	     (MAJOR_NUMVSN(conn->vnum) < 10) ||
+	     (MAJOR_NUMVSN(conn->vnum) == 10 &&
+	      MINOR_NUMRLS(conn->vnum) < 2) ) {
+	  // client or server does not support ping; query the version number as a no-op
+	  text vbuf[2]; // we're just discarding this; give it one char + a null terminator space
+	  ub4 vnum;
+	  rc = OCIServerRelease(conn->svc, conn->err, vbuf, sizeof(vbuf), OCI_HTYPE_SVCCTX, &vnum);
+	} else {
+#ifdef ORA_ENABLE_PING
+	  rc = OCIPing(conn->svc, conn->err, OCI_DEFAULT);
+#endif
+	}
+	ok = (rc == OCI_SUCCESS);
     }
 
     lua_pushboolean(L, ok);

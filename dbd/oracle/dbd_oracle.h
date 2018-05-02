@@ -4,6 +4,15 @@
 #define DBD_ORACLE_CONNECTION	"DBD.Oracle.Connection"
 #define DBD_ORACLE_STATEMENT	"DBD.Oracle.Statement"
 
+/* Oracle macros to parse version number, per 
+ * https://docs.oracle.com/en/database/oracle/oracle-database/12.2/lnoci/miscellaneous-functions.html
+ */
+#define MAJOR_NUMVSN(v) ((sword)(((v) >> 24) & 0x000000FF)) /* version number */
+#define MINOR_NUMRLS(v) ((sword)(((v) >> 20) & 0x0000000F)) /* release number */
+#define UPDATE_NUMUPD(v) ((sword)(((v) >> 12) & 0x000000FF)) /* update number */
+#define PORT_REL_NUMPRL(v) ((sword)(((v) >> 8) & 0x0000000F)) /* port release number */
+#define PORT_UPDATE_NUMPUP(v) ((sword)(((v) >> 0) & 0x000000FF)) /* port update number */
+
 typedef struct _bindparams {
     OCIParam *param;
     text *name;
@@ -25,6 +34,7 @@ typedef struct _connection {
     OCIServer *srv;
     OCISession *auth;
     int autocommit;
+    ub4 vnum;
 } connection_t;
 
 /*
