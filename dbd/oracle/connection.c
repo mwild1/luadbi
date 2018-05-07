@@ -56,7 +56,7 @@ static int connection_new(lua_State *L) {
     /*
      * initialise environment
      */
-    OCIEnvInit((OCIEnv **)&env, OCI_DEFAULT, 0, (dvoid **)0);
+    OCIEnvNlsCreate((OCIEnv **)&env, OCI_DEFAULT, 0, NULL, NULL, NULL, 0, 0, 0, 0);
 
     /* 
      * server contexts 
@@ -85,12 +85,24 @@ static int connection_new(lua_State *L) {
     ub4 vnum;
     rc = OCIServerRelease(svc, err, vbuf, sizeof(vbuf), OCI_HTYPE_SVCCTX, &vnum);
     
+    /* Get default character set info */
+    ub2 charsetid = 0;
+    ub2 ncharsetid = 0;
+    size_t rsize = 0;
+
+    rc = OCINlsEnvironmentVariableGet(&charsetid,(size_t) 0, OCI_NLS_CHARSET_ID, 0, &rsize);
+    rc = OCINlsEnvironmentVariableGet(&ncharsetid, (size_t) 0, OCI_NLS_NCHARSET_ID, 0, &rsize);
+
     conn = (connection_t *)lua_newuserdata(L, sizeof(connection_t));
     conn->oracle = env;
     conn->err = err;
     conn->svc = svc;
     conn->autocommit = 0;
+    conn->charsetid = charsetid;
+    conn->ncharsetid = ncharsetid;
     conn->vnum = vnum;
+    conn->prefetch_mem = 1024 * 1024;
+    conn->prefetch_rows = 1000000;
     
     luaL_getmetatable(L, DBD_ORACLE_CONNECTION);
     lua_setmetatable(L, -2);
@@ -241,6 +253,74 @@ static int connection_lastid(lua_State *L) {
     return 0;
 }
 
+/* 
+ * version = connection:version()
+ */
+static int connection_version(lua_State *L) {
+  connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_ORACLE_CONNECTION);
+  lua_pushinteger(L, conn->vnum);
+
+  return 1;
+}
+
+/* 
+ * rows = connection:prefetch_rows(optional new_rows)
+ *
+ * Sets the prefetch cache row limit (in rows); default 1 million.
+ * Disable by setting to 0 before creating a statement handle.
+ */
+static int connection_prefetch_rows(lua_State *L) {
+  connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_ORACLE_CONNECTION);
+  lua_pushinteger(L, conn->prefetch_rows);
+
+  return 1;
+}
+
+/* 
+ * mem = connection:prefetch_mem(optional new_mem)
+ *
+ * Sets the prefetch cache memory limit (in bytes); default 1024Kb.
+ * Disable by setting to 0 before creating a statement handle.
+ */
+static int connection_prefetch_mem(lua_State *L) {
+  connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_ORACLE_CONNECTION);
+  lua_pushinteger(L, conn->prefetch_mem);
+
+  return 1;
+}
+
+/* 
+ * charset = connection:charset()
+ */
+static int connection_charset(lua_State *L) {
+  connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_ORACLE_CONNECTION);
+
+  if (lua_gettop(L) == 2) {
+    // A number may be passed in if we want to set the value
+    conn->charsetid = lua_tointeger(L, 2);
+  }
+
+  lua_pushinteger(L, conn->charsetid);
+  
+  return 1;
+}
+
+/* 
+ * ncharset = connection:ncharset()
+ */
+static int connection_ncharset(lua_State *L) {
+  connection_t *conn = (connection_t *)luaL_checkudata(L, 1, DBD_ORACLE_CONNECTION);
+
+  if (lua_gettop(L) == 2) {
+    // A number may be passed in if we want to set the value
+    conn->ncharsetid = lua_tointeger(L, 2);
+  }
+  
+  lua_pushinteger(L, conn->ncharsetid);
+
+  return 1;
+}
+
 /*
  * __gc 
  */
@@ -275,6 +355,14 @@ int dbd_oracle_connection(lua_State *L) {
 	{"quote", connection_quote},
 	{"rollback", connection_rollback},
 	{"last_id", connection_lastid},
+
+	// Oracle-specific methods
+	{"version", connection_version},
+	{"prefetch_rows", connection_prefetch_rows},
+	{"prefetch_mem", connection_prefetch_mem},
+	{"charset", connection_charset},
+	{"ncharset", connection_ncharset},
+	
 	{NULL, NULL}
     };
 

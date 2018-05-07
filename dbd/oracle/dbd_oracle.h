@@ -22,6 +22,12 @@ typedef struct _bindparams {
     char *data;
     OCIDefine *define;
     sb2 null;
+    ub2 ret_len;
+    ub2 ret_err;
+    ub4 csid;
+    ub4 csform;
+    ub2 charset;
+    ub2 ncharset;
 } bindparams_t;
 
 /*
@@ -34,7 +40,11 @@ typedef struct _connection {
     OCIServer *srv;
     OCISession *auth;
     int autocommit;
+    ub2 charsetid;
+    ub2 ncharsetid;
     ub4 vnum;
+    ub4 prefetch_mem;
+    ub4 prefetch_rows;
 } connection_t;
 
 /*
@@ -47,5 +57,9 @@ typedef struct _statement {
     bindparams_t *bind;
 
     int metadata;
+    
+    /* cache handling */
+    ub4 prefetch_mem;
+    ub4 prefetch_rows;
 } statement_t;
 
