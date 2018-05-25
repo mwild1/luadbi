@@ -56,8 +56,9 @@ static int connection_new(lua_State *L) {
     }
 
     int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
-    if (n > 2) {
-      flags = luaL_checkinteger(L, 2);
+    if (n >= 2) {
+      if (!lua_isnil(L, 2))
+	flags = luaL_checkinteger(L, 2);
     }
 
     conn = (connection_t *)lua_newuserdata(L, sizeof(connection_t));
