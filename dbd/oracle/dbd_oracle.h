@@ -36,6 +36,7 @@ typedef struct _bindparams {
 typedef struct _connection {
     OCIEnv *oracle;
     OCISvcCtx *svc;
+    OCIServer *svr;
     OCIError *err;
     OCIServer *srv;
     OCISession *auth;
@@ -45,6 +46,9 @@ typedef struct _connection {
     ub4 vnum;
     ub4 prefetch_mem;
     ub4 prefetch_rows;
+    int cbfuncidx;
+    int cbargidx;
+    lua_State *L;
 } connection_t;
 
 /*

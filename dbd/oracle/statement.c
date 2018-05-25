@@ -43,7 +43,7 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
     int i;
 
     char errbuf[100];
-    int errcode;
+    sb4 errcode;
     int rc;
 
     if (statement->metadata)
@@ -64,7 +64,7 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
 			);
 
     if (rc) {
-      OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+      OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
       luaL_error(L, "describe %s", errbuf);
     }
 #endif
@@ -73,7 +73,7 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
     if (prefetch_mem) {
       if (OCIAttrSet(statement->stmt, OCI_HTYPE_STMT, &prefetch_mem, sizeof(prefetch_mem),
 		     OCI_ATTR_PREFETCH_MEMORY, statement->conn->err) != OCI_SUCCESS) {
-	OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *)errbuf, (ub4) sizeof(errbuf), (ub4)OCI_HTYPE_ERROR);
 	luaL_error(L, "prefetch_mem set %s", errbuf);
       }
     }
@@ -83,7 +83,7 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
       if (OCIAttrSet(statement->stmt, OCI_HTYPE_STMT,
 		     &prefetch_rows, sizeof(prefetch_rows), OCI_ATTR_PREFETCH_ROWS,
 		     statement->conn->err) != OCI_SUCCESS) {
-	OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *)errbuf, (ub4) sizeof(errbuf), (ub4) OCI_HTYPE_ERROR);
 	luaL_error(L, "prefetch_rows set %s", errbuf);
       }
     }
@@ -95,25 +95,25 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
     for (i = 0; i < statement->num_columns; i++) {
 	rc = OCIParamGet(statement->stmt, OCI_HTYPE_STMT, statement->conn->err, (dvoid **)&bind[i].param, i+1);
 	if (rc) {
-	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	  OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *) errbuf, (ub4) sizeof(errbuf), (ub4) OCI_HTYPE_ERROR);
 	    luaL_error(L, "param get %s", errbuf);
 	}
 
 	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(bind[i].name), (ub4 *)&(bind[i].name_len), OCI_ATTR_NAME, statement->conn->err);
 	if (rc) {
-	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	  OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *) errbuf, (ub4) sizeof(errbuf), (ub4) OCI_HTYPE_ERROR);
 	    luaL_error(L, "name get %s", errbuf);
 	}
 
 	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(bind[i].data_type), (ub4 *)0, OCI_ATTR_DATA_TYPE, statement->conn->err);
 	if (rc) {
-	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *) errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
 	    luaL_error(L, "datatype get %s", errbuf);
 	}
 
 	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(bind[i].max_len), 0, OCI_ATTR_DATA_SIZE, statement->conn->err);
 	if (rc) {
-	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *) errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
 	    luaL_error(L, "datasize get %s", errbuf);
 	}
 
@@ -183,7 +183,7 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
 	}
 
 	if (rc) {
-	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4)sizeof(errbuf), OCI_HTYPE_ERROR);
+	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *) errbuf, (ub4)sizeof(errbuf), OCI_HTYPE_ERROR);
 	    luaL_error(L, "define by pos %s", errbuf);
 	}
     }
@@ -198,7 +198,6 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
 static int statement_affected(lua_State *L) {
     statement_t *statement = (statement_t *)luaL_checkudata(L, 1, DBD_ORACLE_STATEMENT);
     int affected;
-    int rc; 
 
     if (!statement->stmt) {
         luaL_error(L, DBI_ERR_INVALID_STATEMENT);
@@ -207,7 +206,7 @@ static int statement_affected(lua_State *L) {
     /* 
      * get number of affected rows 
      */
-    rc = OCIAttrGet(
+    OCIAttrGet(
 	(dvoid *)statement->stmt, 
 	(ub4)OCI_HTYPE_STMT,
         (dvoid *)&affected, 
@@ -229,9 +228,7 @@ int statement_close(lua_State *L) {
     int ok = 0;
 
     if (statement->stmt) {
-	int rc;
-
-	rc = OCIHandleFree((dvoid *)statement->stmt, OCI_HTYPE_STMT);    /* Free handles */	
+        OCIHandleFree((dvoid *)statement->stmt, OCI_HTYPE_STMT);    /* Free handles */	
 
 	statement->stmt = NULL;
     }
@@ -263,7 +260,7 @@ static int statement_columns(lua_State *L) {
 
     lua_newtable(L);
     for (i = 0; i < statement->num_columns; i++) {
-	const char *name = dbd_strlower(statement->bind[i].name);
+        const char *name = dbd_strlower((char *)statement->bind[i].name);
 
 	LUA_PUSH_ARRAY_STRING(d, name);
     }
@@ -285,7 +282,7 @@ int statement_execute(lua_State *L) {
     int rc;
 
     char errbuf[100];
-    int errcode;
+    sb4 errcode;
 
     ub2 type;
 
@@ -329,10 +326,10 @@ int statement_execute(lua_State *L) {
 		statement->stmt, 
 		&bnd, 
 		statement->conn->err, 
-		i, 
-		value, 
-		val_size,
-		SQLT_CHR, 
+		(ub4)i, 
+		(dvoid *)value, 
+		(sb4)val_size,
+		(ub2)SQLT_CHR, 
 		(dvoid *)0, 
 		(ub2 *)0, 
 		(ub2 *)0, 
@@ -358,7 +355,7 @@ int statement_execute(lua_State *L) {
 	if (errstr)
 	    lua_pushfstring(L, DBI_ERR_BINDING_PARAMS, errstr);
 	else {
-	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *) errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
 
 	    lua_pushfstring(L, DBI_ERR_BINDING_PARAMS, errbuf);
 	}
@@ -379,7 +376,7 @@ int statement_execute(lua_State *L) {
     );
 
     if (rc) {
-	OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *) errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
 
 	lua_pushboolean(L, 0);
 	lua_pushfstring(L, "Error getting type: %s", errbuf);
@@ -402,7 +399,7 @@ int statement_execute(lua_State *L) {
     );
 
     if (rc) {
-	OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *) errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
 
 	lua_pushboolean(L, 0);
 	lua_pushfstring(L, DBI_ERR_BINDING_EXEC, errbuf);
@@ -423,7 +420,7 @@ int statement_execute(lua_State *L) {
     );
 
     if (rc) {
-	OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, &errcode, errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *) errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
 
 	lua_pushboolean(L, 0);
 	lua_pushfstring(L, DBI_ERR_BINDING_PARAMS, errbuf);
@@ -445,7 +442,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
     bindparams_t *bind;
 
     char errbuf[100];
-    int errcode;
+    sb4 errcode;
 
     if (!statement->stmt) {
 	luaL_error(L, DBI_ERR_FETCH_INVALID);
@@ -473,7 +470,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 
 	for (i = 0; i < statement->num_columns; i++) {
 	    lua_push_type_t lua_push = oracle_to_lua_push(bind[i].data_type, bind[i].null);
-	    const char *name = dbd_strlower(bind[i].name);
+	    const char *name = dbd_strlower((char *)bind[i].name);
 	    const char *data = bind[i].data;
 	    size_t data_size = bind[i].ret_len;
 
@@ -538,7 +535,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
     }
 
     if (status != OCI_SUCCESS) {
-      OCIErrorGet((dvoid *)statement->conn->err, (ub4)1, (text *)NULL, &errcode, errbuf, (ub4)sizeof(errbuf), OCI_HTYPE_ERROR);
+      OCIErrorGet((dvoid *)statement->conn->err, (ub4)1, (text *)NULL, (sb4 *)&errcode, (text *) errbuf, (ub4)sizeof(errbuf), OCI_HTYPE_ERROR);
       luaL_error(L, DBI_ERR_FETCH_FAILED, errbuf);
     }
 
@@ -609,7 +606,6 @@ static int statement_tostring(lua_State *L) {
 }
 
 int dbd_oracle_statement_create(lua_State *L, connection_t *conn, const char *sql_query) { 
-    int rc;
     statement_t *statement = NULL;
     OCIStmt *stmt;
     char *new_sql;
@@ -619,8 +615,8 @@ int dbd_oracle_statement_create(lua_State *L, connection_t *conn, const char *sq
      */
     new_sql = dbd_replace_placeholders(L, ':', sql_query);
 
-    rc = OCIHandleAlloc((dvoid *)conn->oracle, (dvoid **)&stmt, OCI_HTYPE_STMT, 0, (dvoid **)0);
-    rc = OCIStmtPrepare(stmt, conn->err, new_sql, strlen(new_sql), (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DEFAULT);
+    OCIHandleAlloc((dvoid *)conn->oracle, (dvoid **)&stmt, OCI_HTYPE_STMT, 0, (dvoid **)0);
+    OCIStmtPrepare(stmt, conn->err, (CONST text *)new_sql, (ub4)strlen(new_sql), (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DEFAULT);
 
     free(new_sql);
 
