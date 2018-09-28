@@ -82,6 +82,6 @@ end
 
 
 -- Versioning Information
-_M._VERSION = '0.6.1'
+_M._VERSION = '0.7'
 
 return _M
