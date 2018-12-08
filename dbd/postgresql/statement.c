@@ -218,7 +218,12 @@ cleanup:
         lua_pushfstring(L, DBI_ERR_BINDING_EXEC, PQresultErrorMessage(result));
         return 2;
     }
-    
+
+    if (statement->result) {
+        status = PQresultStatus (statement->result);
+	if (status == PGRES_COMMAND_OK || status == PGRES_TUPLES_OK)
+            PQclear (statement->result);
+    }
     statement->result = result;
 
     lua_pushboolean(L, 1);
