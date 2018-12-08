@@ -55,9 +55,15 @@ static int connection_new(lua_State *L) {
 	db = luaL_checkstring(L, 1);
     }
 
+    int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+    if (n >= 2) {
+      if (!lua_isnil(L, 2))
+	flags = luaL_checkinteger(L, 2);
+    }
+
     conn = (connection_t *)lua_newuserdata(L, sizeof(connection_t));
 
-    if (sqlite3_open(db, &conn->sqlite) != SQLITE_OK) {
+    if (sqlite3_open_v2(db, &conn->sqlite, flags, NULL) != SQLITE_OK) {
 	lua_pushnil(L);
 	lua_pushfstring(L, DBI_ERR_CONNECTION_FAILED, sqlite3_errmsg(conn->sqlite));
 	return 2;
@@ -249,6 +255,33 @@ int dbd_sqlite3_connection(lua_State *L) {
     dbd_register(L, DBD_SQLITE_CONNECTION,
 		 connection_methods, connection_class_methods, 
 		 connection_gc, connection_tostring);
+
+    /*
+     * Connection flag constants exported in our namespace
+     */
+    static const struct {
+      const char *name;
+      int value;
+    } sqlite3_constants[] = { 
+      "SQLITE_OPEN_READONLY",     SQLITE_OPEN_READONLY,
+      "SQLITE_OPEN_READWRITE",    SQLITE_OPEN_READWRITE,
+      "SQLITE_OPEN_CREATE",       SQLITE_OPEN_CREATE,
+      "SQLITE_OPEN_URI",          SQLITE_OPEN_URI,
+      "SQLITE_OPEN_MEMORY",       SQLITE_OPEN_MEMORY,
+      "SQLITE_OPEN_NOMUTEX",      SQLITE_OPEN_NOMUTEX,
+      "SQLITE_OPEN_FULLMUTEX",    SQLITE_OPEN_FULLMUTEX,
+      "SQLITE_OPEN_SHAREDCACHE",  SQLITE_OPEN_SHAREDCACHE,
+      "SQLITE_OPEN_PRIVATECACHE", SQLITE_OPEN_PRIVATECACHE,
+      NULL, 0
+    };
+
+    int i = 0;
+    while (sqlite3_constants[i].name) {
+      lua_pushstring(L, sqlite3_constants[i].name);
+      lua_pushinteger(L, sqlite3_constants[i].value);
+      lua_rawset(L, -3);
+      ++i;
+    }
 
     return 1;    
 }
