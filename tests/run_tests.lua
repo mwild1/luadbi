@@ -455,9 +455,30 @@ local function test_db_close_doesnt_segfault()
 
 	-- this also shouldn't segfault.
 	sth:close()
-
 end
 
+local function test_postgres_statement_leak()
+	for i = 1, 10 do
+		local sth = dbh:prepare("SELECT 1");
+		sth:execute();
+		for r in sth:rows() do
+			assert(r[1] == 1, "result should be 1")
+		end
+		sth:close();
+	end
+
+	for i = 1, 5 do
+		collectgarbage("collect")
+	end
+
+	do
+		local sth = dbh:prepare("SELECT * from pg_prepared_statements");
+		sth:execute();
+		local c = 0;
+		for row in sth:rows() do c = c + 1; end
+		assert(c < 10, "too many prepared statements still exist");
+	end
+end
 
 
 describe("PostgreSQL #psql", function()
@@ -476,6 +497,7 @@ describe("PostgreSQL #psql", function()
 	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests no insert_id", test_no_insert_id )
 	it( "Tests affected rows", test_update )
+	it( "Tests for prepared statement leak", test_postgres_statement_leak )
 	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
 	teardown(teardown_tests)
 end)
