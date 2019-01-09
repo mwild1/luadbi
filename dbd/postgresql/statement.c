@@ -45,7 +45,7 @@ static int deallocate(statement_t *statement) {
 	 * - either by a mistake by the calling Lua program, or by
 	 * garbage collection. Don't die in that case.
 	 */
-	if (!statement->conn->postgresql) {
+	if (statement->conn->postgresql) {
 		snprintf(command, IDLEN+13, "DEALLOCATE \"%s\"", statement->name);    
     	result = PQexec(statement->conn->postgresql, command);
 
