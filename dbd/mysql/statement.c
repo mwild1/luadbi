@@ -218,7 +218,7 @@ static int statement_execute(lua_State *L) {
 	switch(type) {
 	    case LUA_TNIL:
 		bind[i].buffer_type = MYSQL_TYPE_NULL;
-		bind[i].is_null = (my_bool*)1;
+		bind[i].is_null = (int*)1;
 		break;
 
 	    case LUA_TBOOLEAN:
@@ -227,7 +227,7 @@ static int statement_execute(lua_State *L) {
 		*boolean = lua_toboolean(L, p);
 
 		bind[i].buffer_type = MYSQL_TYPE_LONG;
-		bind[i].is_null = (my_bool*)0;
+		bind[i].is_null = (int*)0;
 		bind[i].buffer = (char *)boolean;
 		bind[i].length = 0;
 		break;
@@ -242,7 +242,7 @@ static int statement_execute(lua_State *L) {
 		*num = lua_tonumber(L, p);
 
 		bind[i].buffer_type = MYSQL_TYPE_DOUBLE;
-		bind[i].is_null = (my_bool*)0;
+		bind[i].is_null = (int*)0;
 		bind[i].buffer = (char *)num;
 		bind[i].length = 0;
 		break;
@@ -253,7 +253,7 @@ static int statement_execute(lua_State *L) {
 		str = lua_tolstring(L, p, str_len);
 
 		bind[i].buffer_type = MYSQL_TYPE_STRING;
-		bind[i].is_null = (my_bool*)0;
+		bind[i].is_null = (int*)0;
 		bind[i].buffer = (char *)str;
 		bind[i].length = str_len;
 		break;
@@ -593,7 +593,7 @@ int dbd_mysql_statement_create(lua_State *L, connection_t *conn, const char *sql
     statement->lengths = NULL;
 
     /*
-    mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, (my_bool*)0);
+    mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, (int*)0);
     */
 
     luaL_getmetatable(L, DBD_MYSQL_STATEMENT);
