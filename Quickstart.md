@@ -35,7 +35,7 @@ you will not need to ``require()`` anything else:
  
 With DBI loaded, time to connect:
 
-	dbd, err = DBI.connect( 'PostgreSQL', 'your_database', 'dbuser', 'password' )
+	dbd, err = DBI.Connect( 'PostgreSQL', 'your_database', 'dbuser', 'password' )
 	assert(dbd, err)
   
   
@@ -116,7 +116,7 @@ looks as functional code:
 	#!/usr/bin/env lua
 	DBI = require "DBI"
 
-	dbd, err = DBI.connect( 'PostgreSQL', 'your_database', 'dbuser', 'password' )
+	dbd, err = DBI.Connect( 'PostgreSQL', 'your_database', 'dbuser', 'password' )
 	assert(dbd, err)
   
 	dbd:autocommit(true)
