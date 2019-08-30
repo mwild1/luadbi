@@ -46,6 +46,8 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
     sb4 errcode;
     int rc;
 
+    text *namep;
+
     if (statement->metadata)
 	return;
     
@@ -99,12 +101,21 @@ static void statement_fetch_metadata(lua_State *L, statement_t *statement) {
 	    luaL_error(L, "param get %s", errbuf);
 	}
 
-	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(bind[i].name), (ub4 *)&(bind[i].name_len), OCI_ATTR_NAME, statement->conn->err);
+	// NOTE: Oracle does not null terminate strings!!! 
+	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(namep), (ub4 *)&(bind[i].name_len), OCI_ATTR_NAME, statement->conn->err);
 	if (rc) {
 	  OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *) errbuf, (ub4) sizeof(errbuf), (ub4) OCI_HTYPE_ERROR);
 	    luaL_error(L, "name get %s", errbuf);
 	}
 
+	if (bind[i].name_len > DBD_ORACLE_IDENTIFIER_LEN) {
+		luaL_error(L, "Oracle identifier name is too long");
+	}
+	memset(bind[i].name, 0, sizeof(text) * (1 + DBD_ORACLE_IDENTIFIER_LEN));
+	if (bind[i].name_len) {
+		strncpy((char *)bind[i].name, (const char *)namep, (size_t) bind[i].name_len);
+	}
+	
 	rc = OCIAttrGet(bind[i].param, OCI_DTYPE_PARAM, (dvoid *)&(bind[i].data_type), (ub4 *)0, OCI_ATTR_DATA_TYPE, statement->conn->err);
 	if (rc) {
 	    OCIErrorGet((dvoid *)statement->conn->err, (ub4) 1, (text *) NULL, (sb4 *)&errcode, (text *) errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
