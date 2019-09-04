@@ -4,6 +4,9 @@
 #define DBD_ORACLE_CONNECTION	"DBD.Oracle.Connection"
 #define DBD_ORACLE_STATEMENT	"DBD.Oracle.Statement"
 
+// In 12.2, identifiers can be 128 bytes.
+#define DBD_ORACLE_IDENTIFIER_LEN	128
+
 /* Oracle macros to parse version number, per 
  * https://docs.oracle.com/en/database/oracle/oracle-database/12.2/lnoci/miscellaneous-functions.html
  */
@@ -15,7 +18,7 @@
 
 typedef struct _bindparams {
     OCIParam *param;
-    text *name;
+    text name[1 + DBD_ORACLE_IDENTIFIER_LEN];
     ub4 name_len;
     ub2 data_type;
     ub2 max_len;
