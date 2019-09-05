@@ -28,8 +28,8 @@ install:
 
 before_script:
   - mysql -u root -e 'CREATE DATABASE luadbi;'
-  - mysql -u root -e "CREATE USER 'luadbi'@'localhost' IDENTIFIED BY 'testing12345!!!';"
-  - mysql -u root -e "GRANT ALL ON luadbi.* TO 'luadbi'@'localhost';"
+  - mysql -u root -e "CREATE USER 'luadbi' IDENTIFIED BY 'testing12345!!!';"
+  - mysql -u root -e "GRANT ALL ON luadbi.* TO 'luadbi';"
   - mysql -u root luadbi < tests/schemas/mysql.sql
   - psql -c "CREATE DATABASE luadbi;" -U postgres
   - psql -c "CREATE USER luadbi WITH PASSWORD 'testinguser-12345!!!';" -U postgres
