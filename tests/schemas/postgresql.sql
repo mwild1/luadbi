@@ -47,7 +47,7 @@ drop table if exists insert_tests cascade;
 create table insert_tests
 	(
 		id serial primary key,
-		val varchar(255) not null
+		val varchar(255)
 	);
 
 grant insert, select on insert_tests to luadbi;
