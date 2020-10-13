@@ -3,7 +3,7 @@
 #endif
 
 
-#include <mysql.h>
+#include <mysql/mysql.h>
 #include <dbd/common.h>
 
 #define DBD_MYSQL_CONNECTION	"DBD.MySQL.Connection"

@@ -424,7 +424,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 
 		    if (fields[i].type == MYSQL_TYPE_TIMESTAMP || fields[i].type == MYSQL_TYPE_DATETIME) {
 			char str[20];
-			struct st_mysql_time *t = bind[i].buffer;
+			MYSQL_TIME *t = bind[i].buffer;
 
 			snprintf(str, 20, "%d-%02d-%02d %02d:%02d:%02d", t->year, t->month, t->day, t->hour, t->minute, t->second);
 
@@ -435,7 +435,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 			}
 		    } else if (fields[i].type == MYSQL_TYPE_TIME) {
 			char str[9];
-			struct st_mysql_time *t = bind[i].buffer;
+			MYSQL_TIME *t = bind[i].buffer;
 
 			snprintf(str, 9, "%02d:%02d:%02d", t->hour, t->minute, t->second);
 
@@ -446,7 +446,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 			}
 		    } else if (fields[i].type == MYSQL_TYPE_DATE) {
 			char str[20];
-			struct st_mysql_time *t = bind[i].buffer;
+			MYSQL_TIME *t = bind[i].buffer;
 
 			snprintf(str, 11, "%d-%02d-%02d", t->year, t->month, t->day);
 
