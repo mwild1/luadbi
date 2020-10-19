@@ -218,7 +218,6 @@ static int statement_execute(lua_State *L) {
 	switch(type) {
 	    case LUA_TNIL:
 		bind[i].buffer_type = MYSQL_TYPE_NULL;
-		bind[i].is_null = (int*)1;
 		break;
 
 	    case LUA_TBOOLEAN:
