@@ -9,6 +9,10 @@
 #define DBD_MYSQL_CONNECTION	"DBD.MySQL.Connection"
 #define DBD_MYSQL_STATEMENT	"DBD.MySQL.Statement"
 
+#ifndef LIBMARIADB
+#define my_bool bool
+#endif
+
 /*
  * connection object implementation
  */

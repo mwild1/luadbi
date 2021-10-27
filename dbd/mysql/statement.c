@@ -306,6 +306,7 @@ cleanup:
 static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_columns) {
     int column_count, fetch_result_ok;
     MYSQL_BIND *bind = NULL;
+    my_bool *is_null = NULL;
     const char *error_message = NULL;
 
     if (!statement->stmt) {
@@ -333,6 +334,8 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 
         bind = malloc(sizeof(MYSQL_BIND) * column_count);
         memset(bind, 0, sizeof(MYSQL_BIND) * column_count);
+        is_null = malloc(sizeof(my_bool) * column_count);
+        memset(is_null, 0, sizeof(my_bool) * column_count);
 
 	fields = mysql_fetch_fields(statement->metadata);
 
@@ -351,6 +354,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 
 	    bind[i].buffer_type = fields[i].type; 
 	    bind[i].length = &(statement->lengths[i]);
+	    bind[i].is_null = &is_null[i];
 	}
 
 	if (mysql_stmt_bind_result(statement->stmt, bind)) {
@@ -374,7 +378,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 		    mysql_stmt_fetch_column(statement->stmt, &bind[i], i, 0);
 		}
 
-		if (lua_push == LUA_PUSH_NIL) {
+		if (lua_push == LUA_PUSH_NIL || *(bind[i].is_null)) {
 		    if (named_columns) {
 			LUA_PUSH_ATTRIB_NIL(name);
 		    } else {
@@ -487,6 +491,7 @@ cleanup:
 	    free(bind[i].buffer);
 	}
 
+	free(is_null);
 	free(bind);
     }
 
