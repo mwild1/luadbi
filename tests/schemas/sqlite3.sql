@@ -44,7 +44,7 @@ drop table if exists insert_tests;
 create table insert_tests
 	(
 		id integer primary key,
-		val varchar(255) not null
+		val varchar(255)
 	);
 
 drop table if exists update_tests;

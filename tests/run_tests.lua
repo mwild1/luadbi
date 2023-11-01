@@ -301,6 +301,51 @@ local function test_insert_multi()
 
 end
 
+local function test_insert_null()
+
+	local sth, sth2, err, success
+	local stringy = os.date()
+
+
+	sth, err = dbh:prepare(code('insert'))
+
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+
+	success, err = sth:execute(nil)
+
+	assert.is_true(success)
+	assert.is_nil(err)
+
+	assert.is_equal(1, sth:affected())
+
+	--
+	-- Grab it back, make sure it's all good
+	--
+
+	local id = dbh:last_id()
+	assert.is_not_nil(id)
+	sth:close()
+
+	sth2, err = dbh:prepare(code('insert_select'))
+
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+
+	success, err = sth2:execute(id)
+
+	assert.is_true(success)
+	assert.is_nil(err)
+
+	local row = sth2:rows(false)()
+	assert.is_not_nil(row)
+	assert.are_equal(id, row[1])
+	assert.is_nil(row[2])
+
+	sth:close()
+	sth2:close()
+
+end
 
 local function test_insert_returning()
 
@@ -494,6 +539,7 @@ describe("PostgreSQL #psql", function()
 	it( "Tests a simple select", test_select )
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert_returning )
+	it( "Tests inserts of NULL", test_insert_null )
 	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests no insert_id", test_no_insert_id )
 	it( "Tests affected rows", test_update )
@@ -514,6 +560,7 @@ describe("SQLite3 #sqlite3", function()
 	it( "Tests simple selects", test_select )
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert )
+	it( "Tests inserts of NULL", test_insert_null )
 	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests no rowcount", test_no_rowcount )
 	it( "Tests affected rows", test_update )
@@ -534,6 +581,7 @@ describe("MySQL #mysql", function()
 	it( "Tests simple selects", test_select )
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert )
+	it( "Tests inserts of NULL", test_insert_null )
 	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests affected rows", test_update )
 	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
