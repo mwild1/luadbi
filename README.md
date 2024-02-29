@@ -6,7 +6,7 @@ placeholders and bind parameters for all database operations.
 Currently LuaDBI supports DB2, Oracle, MySQL, PostgreSQL and SQLite 
 databases with native database drivers.
 
-This version supports Lua 5.1, 5.2, and 5.3.
+This version supports Lua 5.1 through 5.4.
 
 [![Build Status](https://travis-ci.org/mwild1/luadbi.svg?branch=master)](https://travis-ci.org/mwild1/luadbi)
 
