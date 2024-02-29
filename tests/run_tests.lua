@@ -1,4 +1,4 @@
-#!/usr/bin/env lua5.2
+#!/usr/bin/env lua5.4
 
 package.path = "../?.lua;" .. package.path
 package.cpath = "../?.so;" .. package.cpath
@@ -314,8 +314,8 @@ local function test_insert_null()
 
 	success, err = sth:execute(nil)
 
-	assert.is_true(success)
 	assert.is_nil(err)
+	assert.is_true(success)
 
 	assert.is_equal(1, sth:affected())
 
@@ -385,6 +385,45 @@ local function test_insert_returning()
 	assert.is_not_nil(row)
 	assert.are_equal(id, row[1])
 	assert.are_equal(stringy, row[2])
+
+end
+
+local function test_insert_null_returning()
+
+	local sth, sth2, err, success
+
+	sth, err = dbh:prepare(code('insert_returning'))
+
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+
+	success, err = sth:execute(nil)
+
+	assert.is_nil(err)
+	assert.is_true(success)
+
+	assert.is_equal(1, sth:rowcount())
+
+	--
+	-- Grab it back, make sure it's all good
+	--
+	local id_row = sth:rows(false)()
+	assert.is_not_nil(id_row)
+	local id = id_row[1]
+
+	assert.is_not_nil(id)
+	sth:close()
+
+	sth2, err = dbh:prepare(code('insert_select'))
+
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+	sth2:execute(id)
+
+	local row = sth2:rows(false)()
+	assert.is_not_nil(row)
+	assert.are_equal(id, row[1])
+	assert.is_nil(row[2])
 
 end
 
@@ -539,7 +578,7 @@ describe("PostgreSQL #psql", function()
 	it( "Tests a simple select", test_select )
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert_returning )
-	it( "Tests inserts of NULL", test_insert_null )
+	it( "Tests inserts of NULL", test_insert_null_returning )
 	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests no insert_id", test_no_insert_id )
 	it( "Tests affected rows", test_update )

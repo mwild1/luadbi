@@ -46,7 +46,7 @@ drop table if exists insert_tests;
 create table insert_tests
 	(
 		id int not null primary key auto_increment,
-		val varchar(255)
+		val varchar(255) null
 	);
 
 grant insert, select on insert_tests to 'luadbi'@'%';
