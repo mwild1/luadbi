@@ -1,7 +1,7 @@
 #include <libpq-fe.h>
 #include <dbd/common.h>
 
-/* 
+/*
  * length of a prepared statement ID
  * dbd-postgresql-\d{17}\0
  */
@@ -14,18 +14,18 @@
  * connection object implentation
  */
 typedef struct _connection {
-    PGconn *postgresql;
-    int autocommit;
-    unsigned int statement_id; /* sequence for statement IDs */
+	PGconn *postgresql;
+	int autocommit;
+	unsigned int statement_id; /* sequence for statement IDs */
 } connection_t;
 
 /*
  * statement object implementation
  */
 typedef struct _statement {
-    connection_t *conn;
-    PGresult *result;
-    char name[IDLEN]; /* statement ID */
-    int tuple; /* number of rows returned */
+	connection_t *conn;
+	PGresult *result;
+	char name[IDLEN]; /* statement ID */
+	int tuple; /* number of rows returned */
 } statement_t;
 

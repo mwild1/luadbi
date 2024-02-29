@@ -1,13 +1,13 @@
 #include <oci.h>
 #include <dbd/common.h>
 
-#define DBD_ORACLE_CONNECTION	"DBD.Oracle.Connection"
-#define DBD_ORACLE_STATEMENT	"DBD.Oracle.Statement"
+#define DBD_ORACLE_CONNECTION   "DBD.Oracle.Connection"
+#define DBD_ORACLE_STATEMENT    "DBD.Oracle.Statement"
 
 // In 12.2, identifiers can be 128 bytes.
-#define DBD_ORACLE_IDENTIFIER_LEN	128
+#define DBD_ORACLE_IDENTIFIER_LEN       128
 
-/* Oracle macros to parse version number, per 
+/* Oracle macros to parse version number, per
  * https://docs.oracle.com/en/database/oracle/oracle-database/12.2/lnoci/miscellaneous-functions.html
  */
 #define MAJOR_NUMVSN(v) ((sword)(((v) >> 24) & 0x000000FF)) /* version number */
@@ -17,56 +17,56 @@
 #define PORT_UPDATE_NUMPUP(v) ((sword)(((v) >> 0) & 0x000000FF)) /* port update number */
 
 typedef struct _bindparams {
-    OCIParam *param;
-    text name[1 + DBD_ORACLE_IDENTIFIER_LEN];
-    ub4 name_len;
-    ub2 data_type;
-    ub2 max_len;
-    char *data;
-    OCIDefine *define;
-    sb2 null;
-    ub2 ret_len;
-    ub2 ret_err;
-    ub4 csid;
-    ub4 csform;
-    ub2 charset;
-    ub2 ncharset;
+	OCIParam *param;
+	text name[1 + DBD_ORACLE_IDENTIFIER_LEN];
+	ub4 name_len;
+	ub2 data_type;
+	ub2 max_len;
+	char *data;
+	OCIDefine *define;
+	sb2 null;
+	ub2 ret_len;
+	ub2 ret_err;
+	ub4 csid;
+	ub4 csform;
+	ub2 charset;
+	ub2 ncharset;
 } bindparams_t;
 
 /*
  * connection object
  */
 typedef struct _connection {
-    OCIEnv *oracle;
-    OCISvcCtx *svc;
-    OCIServer *svr;
-    OCIError *err;
-    OCIServer *srv;
-    OCISession *auth;
-    int autocommit;
-    ub2 charsetid;
-    ub2 ncharsetid;
-    ub4 vnum;
-    ub4 prefetch_mem;
-    ub4 prefetch_rows;
-    int cbfuncidx;
-    int cbargidx;
-    lua_State *L;
+	OCIEnv *oracle;
+	OCISvcCtx *svc;
+	OCIServer *svr;
+	OCIError *err;
+	OCIServer *srv;
+	OCISession *auth;
+	int autocommit;
+	ub2 charsetid;
+	ub2 ncharsetid;
+	ub4 vnum;
+	ub4 prefetch_mem;
+	ub4 prefetch_rows;
+	int cbfuncidx;
+	int cbargidx;
+	lua_State *L;
 } connection_t;
 
 /*
  * statement object
  */
 typedef struct _statement {
-    OCIStmt *stmt;
-    connection_t *conn;
-    int num_columns;
-    bindparams_t *bind;
+	OCIStmt *stmt;
+	connection_t *conn;
+	int num_columns;
+	bindparams_t *bind;
 
-    int metadata;
-    
-    /* cache handling */
-    ub4 prefetch_mem;
-    ub4 prefetch_rows;
+	int metadata;
+
+	/* cache handling */
+	ub4 prefetch_mem;
+	ub4 prefetch_rows;
 } statement_t;
 
