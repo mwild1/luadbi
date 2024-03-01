@@ -212,6 +212,7 @@ static int statement_execute(lua_State *L) {
 		const char *str = NULL;
 		size_t *str_len = NULL;
 		double *num = NULL;
+		long *inum = NULL;
 		int *boolean = NULL;
 		char err[64];
 
@@ -226,12 +227,25 @@ static int statement_execute(lua_State *L) {
 			*boolean = lua_toboolean(L, p);
 
 			bind[i].buffer_type = MYSQL_TYPE_LONG;
-			bind[i].is_null = (int*)0;
+			bind[i].is_null = (my_bool*)0;
 			bind[i].buffer = (char *)boolean;
 			bind[i].length = 0;
 			break;
 
 		case LUA_TNUMBER:
+#if LUA_VERSION_NUM > 502
+			if (lua_isinteger(L, p)) {
+				inum = (long *)(buffer + offset);
+				offset += sizeof(long);
+				*inum = lua_tointeger(L, p);
+
+				bind[i].buffer_type = MYSQL_TYPE_LONG;
+				bind[i].is_null = (my_bool*)0;
+				bind[i].buffer = (char *)inum;
+				bind[i].length = 0;
+				break;
+			}
+#endif
 			/*
 			 * num needs to be it's own
 			 * memory here
@@ -239,9 +253,9 @@ static int statement_execute(lua_State *L) {
 			num = (double *)(buffer + offset);
 			offset += sizeof(double);
 			*num = lua_tonumber(L, p);
-
+			
 			bind[i].buffer_type = MYSQL_TYPE_DOUBLE;
-			bind[i].is_null = (int*)0;
+			bind[i].is_null = (my_bool*)0;
 			bind[i].buffer = (char *)num;
 			bind[i].length = 0;
 			break;
@@ -252,7 +266,7 @@ static int statement_execute(lua_State *L) {
 			str = lua_tolstring(L, p, str_len);
 
 			bind[i].buffer_type = MYSQL_TYPE_STRING;
-			bind[i].is_null = (int*)0;
+			bind[i].is_null = (my_bool*)0;
 			bind[i].buffer = (char *)str;
 			bind[i].length = str_len;
 			break;

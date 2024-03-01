@@ -13,6 +13,7 @@ local sql_code = {
 	['select'] = "select * from select_tests where name = %s;",
 	['select_multi'] = "select * from select_tests where flag = %s;",
 	['select_count'] = "select count(*) as total from insert_tests;",
+	['select_limit'] = "select * from select_tests limit %s;",
 	['insert'] = "insert into insert_tests ( val ) values ( %s );",
 	['insert_returning'] = "insert into insert_tests ( val ) values ( %s ) returning id;",
 	['insert_select'] = "select * from insert_tests where id = %s;",
@@ -129,6 +130,46 @@ local function test_select()
 	assert.is_nil(err)
 	assert.is_not_nil(sth)
 	success, err = sth:execute("Row 1")
+
+	assert.is_true(success)
+	assert.is_nil(err)
+
+	for row in sth:rows(true) do
+		count = count + 1
+
+		if config.have_booleans then
+			assert.is_true(row['flag'])
+		else
+			assert.equals(1, row['flag'])
+		end
+
+		assert.equals('Row 1', row['name'])
+		assert.is_number(row['maths'])
+	end
+
+	assert.equals(1, count)
+
+	if config.have_rowcount then
+		assert.equals(sth:rowcount(), count)
+	end
+
+	sth:close()
+
+end
+
+
+--
+-- Added to expose the MySQL limit bug, see Github issue #64
+--
+local function test_select_limit()
+
+	local sth, err = dbh:prepare(code('select_limit'))
+	local count = 0
+	local success
+
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+	success, err = sth:execute(1)
 
 	assert.is_true(success)
 	assert.is_nil(err)
@@ -618,6 +659,7 @@ describe("MySQL #mysql", function()
 	it( "Tests syntax error", syntax_error )
 	it( "Tests value encoding", test_encoding )
 	it( "Tests simple selects", test_select )
+	it( "Tests selects with limit", test_select_limit )
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert )
 	it( "Tests inserts of NULL", test_insert_null )
