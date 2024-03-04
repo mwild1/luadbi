@@ -45,12 +45,12 @@ function _M.Connect(driver, ...)
 		error(string.format("Driver '%s' not found. Available drivers are: %s", driver, available))
     end
 
-    local m, _ = pcall(require, modulefile)
+    local m, err = pcall(require, modulefile)
 
     if not m then
 		-- cannot load the module, we cannot continue
         local available = table.concat(available_drivers(), ',')
-		error(string.format('Cannot load driver %s. Available drivers are: %s', driver, available))
+		error(string.format('Cannot load driver %s: Available drivers are: %s\n%s', driver, available, err))
     end
 
     return package.loaded[modulefile].New(...)
