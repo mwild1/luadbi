@@ -169,6 +169,12 @@ static int statement_execute(lua_State *L) {
 			errflag = sqlite3_bind_null(statement->stmt, i) != SQLITE_OK;
 			break;
 		case LUA_TNUMBER:
+#if LUA_VERSION_NUM > 502
+			if (lua_isinteger(L, p)) {
+				errflag = sqlite3_bind_int64(statement->stmt, i, lua_tointeger(L, p)) != SQLITE_OK;
+				break;
+			}
+#endif
 			errflag = sqlite3_bind_double(statement->stmt, i, lua_tonumber(L, p)) != SQLITE_OK;
 			break;
 		case LUA_TSTRING: {
