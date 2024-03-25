@@ -9,7 +9,7 @@
 #define DBD_MYSQL_CONNECTION    "DBD.MySQL.Connection"
 #define DBD_MYSQL_STATEMENT     "DBD.MySQL.Statement"
 
-#ifndef LIBMARIADB
+#if !defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 80001
 #define my_bool bool
 #endif
 
