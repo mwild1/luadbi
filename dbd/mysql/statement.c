@@ -268,7 +268,7 @@ static int statement_execute(lua_State *L) {
 			bind[i].buffer_type = MYSQL_TYPE_STRING;
 			bind[i].is_null = (my_bool*)0;
 			bind[i].buffer = (char *)str;
-			bind[i].length = str_len;
+			bind[i].length = (unsigned long *)str_len;
 			break;
 
 		default:
