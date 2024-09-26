@@ -403,7 +403,9 @@ local function test_insert_returning()
 	assert.is_nil(err)
 	assert.is_true(success)
 
-	assert.is_equal(1, sth:rowcount())
+	if config.has_rowcount then
+		assert.is_equal(1, sth:rowcount())
+	end
 
 
 	--
@@ -443,7 +445,9 @@ local function test_insert_null_returning()
 	assert.is_nil(err)
 	assert.is_true(success)
 
-	assert.is_equal(1, sth:rowcount())
+	if config.has_rowcount then
+		assert.is_equal(1, sth:rowcount())
+	end
 
 	--
 	-- Grab it back, make sure it's all good
@@ -582,14 +586,15 @@ local function test_db_close_doesnt_segfault()
 	sth:close()
 end
 
+
 local function test_postgres_statement_leak()
 	for i = 1, 10 do
-		local sth = dbh:prepare("SELECT 1");
-		sth:execute();
+		local sth = dbh:prepare("SELECT 1")
+		sth:execute()
 		for r in sth:rows() do
 			assert(r[1] == 1, "result should be 1")
 		end
-		sth:close();
+		sth:close()
 	end
 
 	for i = 1, 5 do
@@ -603,6 +608,16 @@ local function test_postgres_statement_leak()
 		for row in sth:rows() do c = c + 1; end
 		assert(c < 10, "too many prepared statements still exist");
 	end
+end
+
+
+local function test_must_execute_before_fetch()
+
+	sth = dbh:prepare("select 1;")
+	assert.has_error(function()
+		sth:fetch()
+	end)
+
 end
 
 
@@ -625,6 +640,7 @@ describe("PostgreSQL #psql", function()
 	it( "Tests affected rows", test_update )
 	it( "Tests for prepared statement leak", test_postgres_statement_leak )
 	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
+	it( "Tests must execute before fetch", test_must_execute_before_fetch )
 	teardown(teardown_tests)
 end)
 
@@ -645,6 +661,7 @@ describe("SQLite3 #sqlite3", function()
 	it( "Tests no rowcount", test_no_rowcount )
 	it( "Tests affected rows", test_update )
 	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
+	it( "Tests must execute before fetch", test_must_execute_before_fetch )
 	teardown(teardown_tests)
 end)
 
@@ -666,5 +683,29 @@ describe("MySQL #mysql", function()
 	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests affected rows", test_update )
 	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
+	it( "Tests must execute before fetch", test_must_execute_before_fetch )
 	teardown(teardown_tests)
 end)
+
+describe("DuckDB #duckdb", function()
+	db_type = "DuckDB"
+	config = dofile("configs/" .. db_type .. ".lua")
+	-- luacheck: ignore DBI dbh
+	local DBI, dbh
+
+	setup(setup_tests)
+	it( "Tests syntax error", syntax_error )
+	it( "Tests value encoding", test_encoding )
+	it( "Tests simple selects", test_select )
+	it( "Tests selects with limit", test_select_limit )
+	it( "Tests multi-row selects", test_select_multi )
+	it( "Tests inserts", test_insert_returning )
+	it( "Tests inserts of NULL", test_insert_null_returning )
+	it( "Tests statement reuse", test_insert_multi )
+	it( "Tests affected rows", test_update )
+	it( "Tests no insert_id", test_no_insert_id )
+	it( "Tests closing dbh doesn't segfault", test_db_close_doesnt_segfault )
+	it( "Tests must execute before fetch", test_must_execute_before_fetch )
+	teardown(teardown_tests)
+end)
+

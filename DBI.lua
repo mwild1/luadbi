@@ -9,7 +9,8 @@ local name_to_module = {
     SQLite3 = 'dbd.sqlite3',
     DB2 = 'dbd.db2',
     Oracle = 'dbd.oracle',
-    ODBC = 'dbd.odbc'
+    ODBC = 'dbd.odbc',
+    DuckDB = 'dbd.duckdb'
 }
 
 local string = require('string')
