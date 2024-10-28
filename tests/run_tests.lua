@@ -284,6 +284,51 @@ local function test_insert()
 
 end
 
+local function test_insert_string_with_nul()
+
+	local sth, sth2, err, success
+	local stringy = 'a\0b'
+
+
+	sth, err = dbh:prepare(code('insert'))
+
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+
+	success, err = sth:execute(stringy)
+
+	assert.is_true(success)
+	assert.is_nil(err)
+
+	assert.is_equal(1, sth:affected())
+
+	--
+	-- Grab it back, make sure it's all good
+	--
+
+	local id = dbh:last_id()
+	assert.is_not_nil(id)
+	sth:close()
+
+	sth2, err = dbh:prepare(code('insert_select'))
+
+	assert.is_nil(err)
+	assert.is_not_nil(sth)
+
+	success, err = sth2:execute(id)
+
+	assert.is_true(success)
+	assert.is_nil(err)
+
+	local row = sth2:rows(false)()
+	assert.is_not_nil(row)
+	assert.are_equal(id, row[1])
+	assert.are_equal(stringy, row[2])
+
+	sth:close()
+	sth2:close()
+
+end
 
 local function test_insert_multi()
 
@@ -657,6 +702,7 @@ describe("SQLite3 #sqlite3", function()
 	it( "Tests multi-row selects", test_select_multi )
 	it( "Tests inserts", test_insert )
 	it( "Tests inserts of NULL", test_insert_null )
+	it( "Tests inserts string with NUL", test_insert_string_with_nul )
 	it( "Tests statement reuse", test_insert_multi )
 	it( "Tests no rowcount", test_no_rowcount )
 	it( "Tests affected rows", test_update )

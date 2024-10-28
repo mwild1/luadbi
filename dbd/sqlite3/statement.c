@@ -279,11 +279,12 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 				}
 			} else if (lua_push == LUA_PUSH_STRING) {
 				const char *val = (const char *)sqlite3_column_text(statement->stmt, i);
+				int len = sqlite3_column_bytes(statement->stmt, i);
 
 				if (named_columns) {
-					LUA_PUSH_ATTRIB_STRING(name, val);
+					LUA_PUSH_ATTRIB_STRING_BY_LENGTH(name, val, len);
 				} else {
-					LUA_PUSH_ARRAY_STRING(d, val);
+					LUA_PUSH_ARRAY_STRING_BY_LENGTH(d, val, len);
 				}
 			} else if (lua_push == LUA_PUSH_BOOLEAN) {
 				int val = sqlite3_column_int(statement->stmt, i);
