@@ -262,7 +262,7 @@ static int statement_fetch_impl(lua_State *L, statement_t *statement, int named_
 					LUA_PUSH_ARRAY_NIL(d);
 				}
 			} else if (lua_push == LUA_PUSH_INTEGER) {
-				int val = sqlite3_column_int(statement->stmt, i);
+				long val = sqlite3_column_int64(statement->stmt, i);
 
 				if (named_columns) {
 					LUA_PUSH_ATTRIB_INT(name, val);

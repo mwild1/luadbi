@@ -14,6 +14,7 @@ return {
 		['::int'] = -12435212,
 		['::int'] = 0,
 		['::int'] = 9998212,
+		['::int'] = 2839159864,	-- bigger than 2^31-1, aka too big for 32 bit signed
 		['::float'] = 0.00,
 		['::float'] = -7653.25,
 		['::float'] = 1636.94783,
