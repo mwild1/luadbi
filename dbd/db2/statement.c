@@ -520,7 +520,7 @@ int dbd_db2_statement(lua_State *L) {
 
 	dbd_register(L, DBD_DB2_STATEMENT,
 	             statement_methods, statement_class_methods,
-	             statement_gc, statement_tostring);
+	             statement_gc, statement_tostring, statement_close);
 
 	return 1;
 }

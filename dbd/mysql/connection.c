@@ -239,7 +239,7 @@ int dbd_mysql_connection(lua_State *L) {
 
 	dbd_register(L, DBD_MYSQL_CONNECTION,
 	             connection_methods, connection_class_methods,
-	             connection_gc, connection_tostring);
+	             connection_gc, connection_tostring, connection_close);
 
 	return 1;
 }

@@ -254,7 +254,7 @@ int dbd_sqlite3_connection(lua_State *L) {
 
 	dbd_register(L, DBD_SQLITE_CONNECTION,
 	             connection_methods, connection_class_methods,
-	             connection_gc, connection_tostring);
+	             connection_gc, connection_tostring, connection_close);
 
 	/*
 	 * Connection flag constants exported in our namespace
