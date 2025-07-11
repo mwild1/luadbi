@@ -148,6 +148,7 @@ int statement_fetch_impl(lua_State *L, statement_t *statement, int named_columns
 				}
   					break;
   					
+				default:
   				case DUCKDB_TYPE_BLOB:
   				case DUCKDB_TYPE_VARCHAR: {
 					duckdb_string_t *vector_data = (duckdb_string_t *) duckdb_vector_get_data(col1);
@@ -159,10 +160,6 @@ int statement_fetch_impl(lua_State *L, statement_t *statement, int named_columns
 					}
 				}
   					break;
-  					
-				default:
-					luaL_error(L, DBI_ERR_EXECUTE_FAILED, "unknown datatype to bind");
-					break;
 			}
 		} else {
 			// NULL value
