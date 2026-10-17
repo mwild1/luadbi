@@ -22,23 +22,25 @@ for Windows.
 
 = Make Targets =
 
- * make free - builds MySQL, PostgreSQL and SQLite3 drivers
+ * make free - builds MySQL, PostgreSQL, SQLite3 and Duckdb drivers
  * make all - as above, but also builds DB2 and Oracle drivers
  * make mysql
  * make psql
  * make sqlite3
  * make db2
  * make oracle
+ * make duckdb
 
 = Make Targets (install) =
 
- * make install_free - builds and installs MySQL, PostgreSQL and SQLite3 drivers
+ * make install_free - builds and installs MySQL, PostgreSQL, SQLite3 and Duckdb drivers
  * make install_all - as above, but also builds and installs DB2 and Oracle drivers
  * make install_mysql
  * make install_psql
  * make install_sqlite3
  * make install_db2
  * make install_oracle
+ * make install_duckdb
 
 = Installation =
 
