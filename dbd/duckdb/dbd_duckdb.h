@@ -49,7 +49,7 @@ typedef struct _statement {
 
 #define LDB_PUSH_ATTRIB_STRING(v) \
 	if (duckdb_string_is_inlined(v)) {	\
-		lua_pushstring(L, v.value.inlined.inlined);	\
+		lua_pushlstring(L, v.value.inlined.inlined, v.value.inlined.length);	\
 		lua_rawset(L, -3);	\
 	} else {	\
 		lua_pushlstring(L, v.value.pointer.ptr, v.value.pointer.length);	\
@@ -83,7 +83,7 @@ typedef struct _statement {
 // DuckDB stores strings in two different ways, compensate for that here
 #define LDB_PUSH_ARRAY_STRING(n, v) \
 	if (duckdb_string_is_inlined(v)) {	\
-		lua_pushstring(L, v.value.inlined.inlined);	\
+		lua_pushlstring(L, v.value.inlined.inlined, v.value.inlined.length);	\
 		lua_rawseti(L, -2, n);	\
 	} else {	\
 		lua_pushlstring(L, v.value.pointer.ptr, v.value.pointer.length);	\
